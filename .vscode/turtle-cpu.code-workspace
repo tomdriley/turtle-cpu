@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../rtl-toolkit"
+		},
+		{
+			"path": "../turtle-toolkit"
+		}
+	],
+	"settings": {}
+}
