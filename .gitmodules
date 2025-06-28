@@ -1,6 +1,6 @@
 [submodule "turtle-toolkit"]
 	path = turtle-toolkit
 	url = https://github.com/tomdriley/turtle-toolkit.git
-[submodule "rtl"]
-	path = rtl
+[submodule "rtl-toolkit"]
+	path = rtl-toolkit
 	url = https://github.com/tomdriley/rtl.git
