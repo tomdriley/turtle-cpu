@@ -1,14 +1,19 @@
 {
-	"folders": [
-		{
-			"path": ".."
-		},
-		{
-			"path": "../rtl-toolkit"
-		},
-		{
-			"path": "../turtle-toolkit"
-		}
-	],
-	"settings": {}
+    "folders": [
+        {
+            "name": "🐢 Main Project",
+            "path": ".."
+        }
+    ],
+    "settings": {
+        "files.exclude": {
+            "**/node_modules": true,
+            "**/.git": true,
+            "**/.DS_Store": true,
+            "**/Thumbs.db": true
+        }
+    },
+    "extensions": {
+        "recommendations": []
+    }
 }
