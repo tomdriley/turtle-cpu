@@ -1,6 +1,8 @@
 `ifndef ALU_TB
 `define ALU_TB
 
+// TODO FIXME: This file is out of date with the latest RTL
+
 // alu_tb.sv
 // author: Tom Riley
 // date: 2025-05-01
@@ -8,19 +10,19 @@
 // Testbench for the ALU module
 module alu_tb;
     // Parameters
-    localparam DATA_WIDTH = 8;
+    localparam DATA_W = 8;
 
     // Signals
-    logic [DATA_WIDTH-1:0] op_a;
-    logic [DATA_WIDTH-1:0] op_b;
+    logic [DATA_W-1:0] op_a;
+    logic [DATA_W-1:0] op_b;
     alu_func_e func;
-    logic [DATA_WIDTH-1:0] out;
+    logic [DATA_W-1:0] out;
     logic signed_overflow;
     logic carry_flag;
 
     // Instantiate the ALU
     alu #(
-        .DATA_WIDTH(DATA_WIDTH)
+        .DATA_W(DATA_W)
     ) u_alu (
         .op_a(op_a),
         .op_b(op_b),
@@ -32,14 +34,14 @@ module alu_tb;
 
     // Task to generate random test cases
     task automatic generate_random_test();
-        logic [DATA_WIDTH-1:0] rand_op_a;
-        logic [DATA_WIDTH-1:0] rand_op_b;
+        logic [DATA_W-1:0] rand_op_a;
+        logic [DATA_W-1:0] rand_op_b;
         alu_func_e rand_func;
 
         begin
             // Generate random operands and function
-            rand_op_a = $urandom_range(0, 2**DATA_WIDTH - 1)[DATA_WIDTH-1:0];
-            rand_op_b = $urandom_range(0, 2**DATA_WIDTH - 1)[DATA_WIDTH-1:0];
+            rand_op_a = $urandom_range(0, 2**DATA_W - 1)[DATA_W-1:0];
+            rand_op_b = $urandom_range(0, 2**DATA_W - 1)[DATA_W-1:0];
             rand_func = alu_func_e'($urandom_range(0, 32'b111)[2:0]);
 
             // Apply random values to the ALU
