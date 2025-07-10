@@ -10,5 +10,5 @@ REGISTER_FILE_INCLUDE_FILES := $(INCLUDE_FILES)
 
 INCLUDE_DIRS := $(REGISTER_FILE_DIRS) $(PROGRAM_COUNTER_DIR)/rtl $(PROGRAM_COUNTER_DIR)/tb
 INCLUDE_FILES := $(REGISTER_FILE_INCLUDE_FILES) program_counter_pkg.sv
-FILE_LIST := $(INCLUDE_FILES) program_counter.sv # program_counter_tb.sv
+FILE_LIST := $(INCLUDE_FILES) program_counter.sv program_counter_tb.sv
 WAVE_FILE := waves.vcd

@@ -9,11 +9,11 @@
 module clk_rst_gen_tb;
     initial begin
         $dumpfile("waves.vcd");
-        $dumpvars(0, waves);
+        $dumpvars(0, clk_rst_gen_tb);
     end
 
     // Parameters
-    parameter int CLK_PERIOD_NS = 1000;
+    parameter int CLK_PERIOD_NS = 100; // Faster clock for simulation
 
     // Inputs
     logic reset_btn;
@@ -39,14 +39,41 @@ module clk_rst_gen_tb;
 
     // Test sequence
     initial begin
-        $display("Starting test sequence...");
+        $display("Starting clk_rst_gen testbench...");
+        
+        // Test reset functionality
+        $display("Testing reset functionality...");
         reset_btn = 1; // Apply reset
         manual_clk_sw = 0;
         pulse_clk_btn = 0;
-        #50us;
+        #100ns;
+        if (reset_n !== 0) $error("Reset should be asserted (reset_n = 0)");
+        
         reset_btn = 0; // Release reset
-        #100us;
-        $display("Ending test sequence...");
+        #100ns;
+        if (reset_n !== 1) $error("Reset should be deasserted (reset_n = 1)");
+        
+        // Test automatic clock mode
+        $display("Testing automatic clock mode...");
+        manual_clk_sw = 0;
+        #5000ns; // Wait for a few clock cycles
+        
+        // Test manual clock mode
+        $display("Testing manual clock mode...");
+        manual_clk_sw = 1;
+        pulse_clk_btn = 0;
+        #100ns;
+        if (clk !== 0) $error("Clock should be 0 when pulse_clk_btn is 0");
+        
+        pulse_clk_btn = 1;
+        #100ns;
+        if (clk !== 1) $error("Clock should be 1 when pulse_clk_btn is 1");
+        
+        pulse_clk_btn = 0;
+        #100ns;
+        if (clk !== 0) $error("Clock should be 0 when pulse_clk_btn is 0");
+        
+        $display("clk_rst_gen testbench completed successfully!");
         $finish; // End simulation
     end
 

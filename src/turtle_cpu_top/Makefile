@@ -48,5 +48,5 @@ INCLUDE_FILES := $(ALU_INCLUDE_FILES) \
 				$(INSTRUCTION_MEMORY_INCLUDE_FILES) \
 				$(PROGRAM_COUNTER_INCLUDE_FILES) \
 				$(REGISTER_FILE_INCLUDE_FILES)
-FILE_LIST := $(INCLUDE_FILES) turtle_cpu_top.sv 
+FILE_LIST := $(INCLUDE_FILES) turtle_cpu_top.sv turtle_cpu_top_tb.sv 
 WAVE_FILE := waves.vcd
