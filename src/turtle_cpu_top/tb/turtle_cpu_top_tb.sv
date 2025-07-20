@@ -28,6 +28,10 @@ module turtle_cpu_top_tb;
 
     // Test sequence
     initial begin
+        string initial_instruction_memory_file = "initial_instruction_memory.txt";
+        string final_data_memory_file = "final_data_memory.txt";
+        string final_register_file = "final_register_file.txt";
+
         reset_btn = 1;
         manual_clk_sw = 0;
         pulse_clk_btn = 0;
@@ -36,14 +40,27 @@ module turtle_cpu_top_tb;
 
         reset_btn = 0;
 
-        $readmemb("initial_instruction_memory.txt", uut.instruction_memory_inst.mem);
+        if (!$value$plusargs("initial_instruction_memory_file=%s", initial_instruction_memory_file)) begin
+            $display("No initial instruction memory file provided, using default.");
+        end
+        $display("Loading initial instruction memory from %s", initial_instruction_memory_file);
+        $readmemb(initial_instruction_memory_file, uut.instruction_memory_inst.mem);
 
         #20ms;
 
         $display("Turtle CPU Top-level testbench completed successfully!");
 
-        $writememb("final_data_memory.txt", uut.data_memory_inst.mem);
-        $writememb("final_register_file.txt", uut.register_file_inst.mem);
+        if (!$value$plusargs("final_data_memory_file=%s", final_data_memory_file)) begin
+            $display("No final data memory file provided, using default.");
+        end
+        $display("Saving final data memory to %s", final_data_memory_file);
+        $writememb(final_data_memory_file, uut.data_memory_inst.mem);
+        
+        if (!$value$plusargs("final_register_file=%s", final_register_file)) begin
+            $display("No final register file provided, using default.");
+        end
+        $display("Saving final register file to %s", final_register_file);
+        $writememb(final_register_file, uut.register_file_inst.mem);
 
         $finish;
     end

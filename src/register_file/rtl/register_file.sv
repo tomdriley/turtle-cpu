@@ -43,8 +43,9 @@ module register_file #(
     output logic [D_ADDR_WIDTH-1:0] dmar,
     output logic [I_ADDR_WIDTH-1:0] imar
 );
-
+    /* verilator lint_off UNUSEDSIGNAL */
     logic [DATA_W-1:0] mem [15:0]; // Memory view of registers (for debugging)
+    /* verilator lint_on UNUSEDSIGNAL */
 
     // Internal register storage
     logic [DATA_W-1:0] gpr [NUM_GPR-1:0];           // R0-R7
