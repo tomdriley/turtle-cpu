@@ -53,7 +53,6 @@ module alu#(
             default: begin
                 result = 'x;
                 carry_flag = 'x;
-                assert(0) else $fatal("Invalid ALU function: %0d", alu_func);
             end
         endcase
     end

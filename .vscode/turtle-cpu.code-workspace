@@ -3,6 +3,9 @@
         {
             "name": "🐢 Main Project",
             "path": ".."
+        },
+        {
+            "path": "../turtle-toolkit"
         }
     ],
     "settings": {
@@ -11,7 +14,7 @@
             "**/.git": true,
             "**/.DS_Store": true,
             "**/Thumbs.db": true
-        }
+        },
     },
     "extensions": {
         "recommendations": []

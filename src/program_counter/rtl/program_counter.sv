@@ -44,7 +44,7 @@ module program_counter #(
     end
 
     always_comb begin
-        if (!unconditional_branch) begin
+        if (jump_branch_select && !unconditional_branch) begin
             unique case (branch_condition)
                 COND_ZERO: branch_taken = status_register[ZERO_FLAG];
                 COND_NOT_ZERO: branch_taken = !status_register[ZERO_FLAG];

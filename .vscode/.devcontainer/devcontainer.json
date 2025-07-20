@@ -3,7 +3,7 @@
 {
 	"name": "Turtle CPU",
 	// Use custom Dockerfile instead of base image
-	"dockerFile": "../../rtl-toolkit/.devcontainer/Dockerfile",
+	"dockerFile": "./Dockerfile",
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {
 			"version": "latest",
@@ -30,12 +30,23 @@
 		"vscode": {
 			"extensions": [
 				"mshr-h.veriloghdl",
-				"ms-azuretools.vscode-docker"
+				"ms-azuretools.vscode-docker",
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-python.mypy-type-checker",
+				"ms-python.black-formatter",
+				"ms-python.flake8",
+				"ms-python.debugpy",
+				"ms-azuretools.vscode-docker",
+				"ms-vscode-remote.remote-containers",
+				"GitHub.copilot-chat",
+				"ms-python.isort",
+				"ms-vscode.hexeditor"
 			]
 		}
 	},
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "cd /workspaces/turtle-cpu/rtl-toolkit && make setup"
+	"postCreateCommand": "cd /workspaces/turtle-cpu/turtle-toolkit && poetry config virtualenvs.in-project true && poetry install && cd /workspaces/turtle-cpu/rtl-toolkit && make setup"
 	// Configure tool-specific properties.
 	// "customizations": {},
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.

@@ -44,6 +44,8 @@ module register_file #(
     output logic [I_ADDR_WIDTH-1:0] imar
 );
 
+    logic [DATA_W-1:0] mem [15:0]; // Memory view of registers (for debugging)
+
     // Internal register storage
     logic [DATA_W-1:0] gpr [NUM_GPR-1:0];           // R0-R7
     logic [DATA_W-1:0] acc;                         // Accumulator
@@ -141,6 +143,24 @@ module register_file #(
                 // Upper bits remain unchanged
             end
         end
+    end
+
+    always_comb begin
+        // Memory view for debugging purposes
+        mem[REG_R0] = gpr[0];
+        mem[REG_R1] = gpr[1];
+        mem[REG_R2] = gpr[2];
+        mem[REG_R3] = gpr[3];
+        mem[REG_R4] = gpr[4];
+        mem[REG_R5] = gpr[5];
+        mem[REG_R6] = gpr[6];
+        mem[REG_R7] = gpr[7];
+        mem[REG_ACC] = acc;
+        mem[REG_DBAR] = {{(DATA_W-(D_ADDR_WIDTH-DATA_W)){1'b0}}, dbar};
+        mem[REG_DOFF] = doff;
+        mem[REG_IBAR] = {{(DATA_W-(I_ADDR_WIDTH-DATA_W)){1'b0}}, ibar};
+        mem[REG_IOFF] = ioff;
+        mem[REG_STATUS] = status;
     end
 
 endmodule: register_file
