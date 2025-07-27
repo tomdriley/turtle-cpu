@@ -11,8 +11,12 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Tuple, Optional
+
+# Import turtle-toolkit functions directly (now that it's a proper dependency)
+from turtle_toolkit import assemble_program, simulate_program, compare_files
 
 
 class TurtleCPUTestFramework:
@@ -28,6 +32,7 @@ class TurtleCPUTestFramework:
         self.save_debug = save_debug
         self.debug_dir = self.project_root / "tests" / "integration" / "debug_output"
         self.rtl_built = False  # Track if RTL has been built
+        self.timing_data = {}  # Store timing information
         
     def run_command(self, cmd: list, cwd: str = None, capture_output: bool = True) -> Tuple[int, str, str]:
         """Run a shell command and return (return_code, stdout, stderr)"""
@@ -35,6 +40,7 @@ class TurtleCPUTestFramework:
         if cwd:
             print(f"  in directory: {cwd}")
         
+        start_time = time.time()
         try:
             result = subprocess.run(
                 cmd, 
@@ -43,13 +49,18 @@ class TurtleCPUTestFramework:
                 text=True,
                 check=False
             )
+            elapsed = time.time() - start_time
+            cmd_name = cmd[0] if cmd else "unknown"
+            print(f"  ⏱️  {cmd_name} took {elapsed:.2f}s")
             return result.returncode, result.stdout, result.stderr
         except Exception as e:
+            elapsed = time.time() - start_time
+            print(f"  ⏱️  Command failed after {elapsed:.2f}s")
             return -1, "", str(e)
     
     def assemble_program(self, asm_file: str, output_file: str) -> bool:
         """Assemble an assembly program to binary string format"""
-        print(f"Assembling {asm_file} to {output_file}")
+        print(f"🔧 Assembling {asm_file} to {output_file}")
         
         # Convert to absolute path 
         asm_path = Path(asm_file)
@@ -61,52 +72,85 @@ class TurtleCPUTestFramework:
             print(f"Assembly failed: File not found: {asm_path}")
             return False
         
-        # For the turtle-toolkit, we need to provide a path relative to the turtle_toolkit_dir
-        # or use absolute path if outside
         try:
-            rel_asm_path = asm_path.relative_to(self.turtle_toolkit_dir)
-        except ValueError:
-            # File is outside turtle_toolkit_dir, use absolute path
-            rel_asm_path = asm_path
-        
-        cmd = [
-            "poetry", "run", "turtle-toolkit", "assemble",
-            "--format", "binstr",
-            str(rel_asm_path),
-            "-o", output_file
-        ]
-        
-        ret_code, stdout, stderr = self.run_command(cmd, cwd=str(self.turtle_toolkit_dir))
-        
-        if ret_code != 0:
-            print(f"Assembly failed: {stderr}")
-            print(f"Assembly stdout: {stdout}")
+            start_time = time.time()
+            
+            # Read the assembly source code
+            with open(asm_path, 'r') as f:
+                source_code = f.read()
+            
+            # Use the Assembler class directly to get both binary and formatted text
+            from turtle_toolkit.assembler import Assembler
+            binary_data, formatted_text = Assembler.assemble_to_binary_string(
+                source_code, asm_path.name, "stripped"
+            )
+            
+            # Write the formatted text to output file
+            with open(output_file, 'w') as f:
+                f.write(formatted_text)
+            
+            elapsed = time.time() - start_time
+            self.timing_data.setdefault('assembly', []).append(elapsed)
+            
+            print(f"✅ Assembly successful ({elapsed:.2f}s)")
+            return True
+                
+        except Exception as e:
+            elapsed = time.time() - start_time
+            self.timing_data.setdefault('assembly', []).append(elapsed)
+            print(f"Assembly failed with exception: {e} ({elapsed:.2f}s)")
             return False
-        
-        print("Assembly successful")
-        return True
     
     def run_simulator(self, binstr_file: str, memory_dump: str, registers_dump: str) -> bool:
         """Run the software simulator"""
-        print(f"Running simulator on {binstr_file}")
+        print(f"🐢 Running simulator on {binstr_file}")
         
-        cmd = [
-            "poetry", "run", "turtle-toolkit", "simulate",
-            "--format", "binstr",
-            binstr_file,
-            "--dump-memory", memory_dump,
-            "--dump-memory-full",
-            "--dump-registers", registers_dump
-        ]
-        
-        ret_code, stdout, stderr = self.run_command(cmd, cwd=str(self.turtle_toolkit_dir))
-        
-        if ret_code != 0:
-            print(f"Simulation failed: {stderr}")
+        try:
+            start_time = time.time()
+            
+            # Read the binary string file and convert to bytes
+            with open(binstr_file, 'r') as f:
+                binstr_content = f.read().strip()
+            
+            # Convert binary string to bytes (assuming format like "01000100 00000001")
+            # Remove comments and whitespace, then convert
+            clean_binary_str = ""
+            for line in binstr_content.split('\n'):
+                # Remove comments (everything after //)
+                line = line.split('//')[0].strip()
+                # Remove all whitespace
+                clean_binary_str += ''.join(line.split())
+            
+            # Convert binary string to bytes
+            if len(clean_binary_str) % 8 != 0:
+                print(f"Error: Binary string length ({len(clean_binary_str)}) not divisible by 8")
+                return False
+            
+            binary_data = bytes([int(clean_binary_str[i:i+8], 2) for i in range(0, len(clean_binary_str), 8)])
+            
+            # Use library function to simulate
+            result = simulate_program(
+                binary_data,
+                max_cycles=10000,
+                dump_memory=memory_dump,
+                dump_registers=registers_dump
+            )
+            
+            elapsed = time.time() - start_time
+            self.timing_data.setdefault('simulation', []).append(elapsed)
+            
+            if result['halted']:
+                print(f"✅ Simulation successful - halted after {result['cycle_count']} cycles ({elapsed:.2f}s)")
+                return True
+            else:
+                print(f"Simulation reached max cycles without halting ({elapsed:.2f}s)")
+                return False
+                
+        except Exception as e:
+            elapsed = time.time() - start_time
+            self.timing_data.setdefault('simulation', []).append(elapsed)
+            print(f"Simulation failed with exception: {e} ({elapsed:.2f}s)")
             return False
-        
-        print("Simulation successful")
-        return True
     
     def ensure_rtl_built(self) -> bool:
         """Ensure RTL is built (build only once)"""
@@ -122,7 +166,7 @@ class TurtleCPUTestFramework:
     
     def run_rtl_simulation(self, binstr_file: str, memory_dump: str, registers_dump: str) -> bool:
         """Run the RTL simulation"""
-        print(f"Running RTL simulation with {binstr_file}")
+        print(f"⚡ Running RTL simulation with {binstr_file}")
         
         # Ensure RTL is built (only builds once)
         if not self.ensure_rtl_built():
@@ -132,36 +176,41 @@ class TurtleCPUTestFramework:
         plusargs = f"+initial_instruction_memory_file={binstr_file} +final_data_memory_file={memory_dump} +final_register_file={registers_dump}"
         
         cmd = ["make", "run", f"PLUSARGS={plusargs}"]
+        start_time = time.time()
         ret_code, stdout, stderr = self.run_command(cmd, cwd=str(self.rtl_dir))
+        elapsed = time.time() - start_time
+        self.timing_data.setdefault('rtl_simulation', []).append(elapsed)
         
         if ret_code != 0:
             print(f"RTL simulation failed: {stderr}")
             return False
         
-        print("RTL simulation successful")
+        print(f"✅ RTL simulation successful ({elapsed:.2f}s)")
         return True
     
     def compare_dumps(self, file1: str, file2: str, dump_type: str) -> bool:
         """Compare two memory/register dumps"""
-        print(f"Comparing {dump_type}: {file1} vs {file2}")
+        print(f"🔍 Comparing {dump_type}: {file1} vs {file2}")
         
-        cmd = [
-            "poetry", "run", "turtle-toolkit", "mem-compare",
-            file1, file2,
-            "--ignore-comments",
-            "--verbose"
-        ]
-        
-        ret_code, stdout, stderr = self.run_command(cmd, cwd=str(self.turtle_toolkit_dir))
-        
-        if ret_code != 0:
-            print(f"{dump_type} comparison failed!")
-            print(f"Output: {stdout}")
-            print(f"Error: {stderr}")
+        try:
+            start_time = time.time()
+            # Use library function directly
+            success = compare_files(file1, file2, ignore_comments=True, verbose=True)
+            elapsed = time.time() - start_time
+            self.timing_data.setdefault('comparison', []).append(elapsed)
+            
+            if success:
+                print(f"✅ {dump_type} comparison passed! ({elapsed:.2f}s)")
+                return True
+            else:
+                print(f"{dump_type} comparison failed! ({elapsed:.2f}s)")
+                return False
+                
+        except Exception as e:
+            elapsed = time.time() - start_time
+            self.timing_data.setdefault('comparison', []).append(elapsed)
+            print(f"{dump_type} comparison failed with exception: {e} ({elapsed:.2f}s)")
             return False
-        
-        print(f"{dump_type} comparison passed!")
-        return True
     
     def test_assembly_program(self, asm_file: str, test_name: str = None) -> bool:
         """Test an assembly program through both simulator and RTL"""
@@ -169,9 +218,11 @@ class TurtleCPUTestFramework:
             test_name = Path(asm_file).stem
         
         print(f"\n{'='*60}")
-        print(f"Testing: {asm_file}")
+        print(f"🧪 Testing: {asm_file}")
         print(f"Test name: {test_name}")
         print(f"{'='*60}")
+        
+        test_start_time = time.time()
         
         # Create temporary directory for test outputs
         with tempfile.TemporaryDirectory(prefix=f"turtle_test_{test_name}_") as temp_dir:
@@ -205,8 +256,11 @@ class TurtleCPUTestFramework:
             memory_match = self.compare_dumps(str(sim_memory_dump), str(rtl_memory_dump), "Memory")
             registers_match = self.compare_dumps(str(sim_registers_dump), str(rtl_registers_dump), "Registers")
             
+            test_elapsed = time.time() - test_start_time
+            self.timing_data.setdefault('full_test', []).append(test_elapsed)
+            
             if memory_match and registers_match:
-                print("✅ Test PASSED: RTL and simulator results match!")
+                print(f"✅ Test PASSED: RTL and simulator results match! ({test_elapsed:.2f}s total)")
                 
                 # Save debug files if requested
                 if self.save_debug:
@@ -222,7 +276,7 @@ class TurtleCPUTestFramework:
                 
                 return True
             else:
-                print("❌ Test FAILED: Results don't match")
+                print(f"❌ Test FAILED: Results don't match ({test_elapsed:.2f}s total)")
                 
                 # Copy files to a persistent location for debugging
                 debug_dir = self.debug_dir / test_name
@@ -235,6 +289,59 @@ class TurtleCPUTestFramework:
                 
                 print(f"Debug files saved to: {debug_dir}")
                 return False
+    
+    def print_timing_summary(self):
+        """Print a summary of timing data collected during tests"""
+        print(f"\n{'='*60}")
+        print("⏱️  PERFORMANCE SUMMARY")
+        print(f"{'='*60}")
+        
+        if not self.timing_data:
+            print("No timing data collected")
+            return
+        
+        # Calculate total test time first (this is the real total)
+        total_test_time = 0
+        if 'full_test' in self.timing_data:
+            total_test_time = sum(self.timing_data['full_test'])
+            print(f"Total Test Suite Time: {total_test_time:.2f}s")
+            print(f"Number of Tests: {len(self.timing_data['full_test'])}")
+            print()
+        
+        # Show breakdown by individual operations (excluding full_test to avoid double counting)
+        operation_order = ['assembly', 'simulation', 'rtl_simulation', 'comparison']
+        
+        for operation in operation_order:
+            if operation in self.timing_data and self.timing_data[operation]:
+                times = self.timing_data[operation]
+                total_time = sum(times)
+                avg_time = total_time / len(times)
+                min_time = min(times)
+                max_time = max(times)
+                
+                # Calculate percentage of total test time
+                if total_test_time > 0:
+                    percentage = (total_time / total_test_time) * 100
+                    print(f"{operation.replace('_', ' ').title()}: {percentage:.1f}% ({total_time:.2f}s total)")
+                else:
+                    print(f"{operation.replace('_', ' ').title()}: {total_time:.2f}s total")
+                
+                print(f"  Count: {len(times)}, Avg: {avg_time:.2f}s, Min: {min_time:.2f}s, Max: {max_time:.2f}s")
+                print()
+        
+        # Calculate overhead (time not accounted for by individual operations)
+        if total_test_time > 0:
+            accounted_time = sum([
+                sum(self.timing_data.get(op, [])) 
+                for op in operation_order 
+                if op in self.timing_data
+            ])
+            overhead = total_test_time - accounted_time
+            if overhead > 0.1:  # Only show if significant
+                overhead_percentage = (overhead / total_test_time) * 100
+                print(f"Framework Overhead: {overhead_percentage:.1f}% ({overhead:.2f}s total)")
+                print("  (File I/O, temporary directory management, etc.)")
+                print()
     
     def run_test_suite(self, test_patterns: list = None) -> bool:
         """Run a suite of tests"""
@@ -249,7 +356,8 @@ class TurtleCPUTestFramework:
             if test_programs_dir.exists():
                 test_patterns.extend(list(test_programs_dir.glob("*.asm")))
         
-        print(f"\nRunning test suite with {len(test_patterns)} tests")
+        print(f"\n🚀 Running test suite with {len(test_patterns)} tests")
+        suite_start_time = time.time()
         
         passed = 0
         failed = 0
@@ -264,9 +372,15 @@ class TurtleCPUTestFramework:
                 print(f"❌ Test FAILED with exception: {e}")
                 failed += 1
         
+        suite_elapsed = time.time() - suite_start_time
+        
         print(f"\n{'='*60}")
-        print(f"Test Results: {passed} passed, {failed} failed")
+        print(f"📊 Test Results: {passed} passed, {failed} failed")
+        print(f"⏱️  Total Suite Time: {suite_elapsed:.2f}s")
         print(f"{'='*60}")
+        
+        # Print detailed timing summary
+        self.print_timing_summary()
         
         return failed == 0
 

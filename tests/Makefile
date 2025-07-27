@@ -31,11 +31,11 @@ ifndef TEST_FILE
 	@echo "Usage: make test-single TEST_FILE=path/to/file.asm"
 	@exit 1
 endif
-	cd integration && python3 test_framework.py --test-file ../$(TEST_FILE) $(if $(TEST_NAME),--test-name $(TEST_NAME))
+	cd .. && poetry run python tests/integration/test_framework.py --test-file $(TEST_FILE) $(if $(TEST_NAME),--test-name $(TEST_NAME))
 
 # Run the full test suite
 test-suite:
-	cd integration && python3 test_framework.py --test-suite
+	cd .. && poetry run python tests/integration/test_framework.py --test-suite
 
 # Clean test framework debug output
 clean:
