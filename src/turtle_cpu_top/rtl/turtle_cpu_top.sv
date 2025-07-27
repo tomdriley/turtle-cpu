@@ -80,7 +80,7 @@ module turtle_cpu_top#(
 
     // ALU to Register File connections
     wire zero_flag; // Zero flag output from ALU
-    wire negative_flag; // Negative flag output from ALU
+    wire positive_flag; // Positive flag output from ALU
     wire carry_flag; // Carry flag output from ALU
     wire overflow_flag; // Overflow flag output from ALU
 
@@ -165,7 +165,7 @@ module turtle_cpu_top#(
         .read_data(register_data_bus),
         .status_write_enable(status_write_enable),
         .zero_flag(zero_flag),
-        .negative_flag(negative_flag),
+        .positive_flag(positive_flag),
         .carry_flag(carry_flag),
         .overflow_flag(overflow_flag),
         .dmar(dmar),
@@ -193,7 +193,7 @@ module turtle_cpu_top#(
         .output_enable(alu_output_enable),
         .alu_result(acc_in_bus),
         .zero_flag(zero_flag),
-        .negative_flag(negative_flag),
+        .positive_flag(positive_flag),
         .carry_flag(carry_flag),
         .signed_overflow(overflow_flag)
     );

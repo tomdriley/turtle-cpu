@@ -35,7 +35,7 @@ module register_file #(
     // Status register inputs (from ALU)
     input logic status_write_enable,
     input logic zero_flag,
-    input logic negative_flag,
+    input logic positive_flag,
     input logic carry_flag,
     input logic overflow_flag,
     
@@ -103,7 +103,8 @@ module register_file #(
             doff <= '0;
             ibar <= '0;
             ioff <= '0;
-            status <= '0;
+            // Initialize status register with zero=1 and positive=1 flags (matching ACC=0)
+            status <= 8'b00000011;
         end else begin
             // Accumulator update (highest priority)
             if (acc_write_enable) begin
@@ -138,7 +139,7 @@ module register_file #(
             // Status register update from ALU flags
             if (status_write_enable) begin
                 status[ZERO_FLAG] <= zero_flag;     // Z/NZ flag
-                status[NEGATIVE_FLAG] <= negative_flag; // P/N flag
+                status[NEGATIVE_FLAG] <= positive_flag; // P/N flag (now directly positive)
                 status[CARRY_FLAG] <= carry_flag;    // CS/CC flag
                 status[OVERFLOW_FLAG] <= overflow_flag; // OS/OC flag
                 // Upper bits remain unchanged

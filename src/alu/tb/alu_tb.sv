@@ -26,7 +26,7 @@ module alu_tb;
     logic output_enable;
     wire [DATA_W-1:0] alu_result;
     wire zero_flag;
-    wire negative_flag;
+    wire positive_flag;
     wire carry_flag;
     wire signed_overflow;
 
@@ -40,7 +40,7 @@ module alu_tb;
         .output_enable(output_enable),
         .alu_result(alu_result),
         .zero_flag(zero_flag),
-        .negative_flag(negative_flag),
+        .positive_flag(positive_flag),
         .carry_flag(carry_flag),
         .signed_overflow(signed_overflow)
     );
@@ -59,9 +59,9 @@ module alu_tb;
         output_enable = enable;
         #10ns;
         
-        $display("Test: %s | A=%02h B=%02h Func=%s En=%b | Result=%02h Z=%b N=%b C=%b O=%b",
+        $display("Test: %s | A=%02h B=%02h Func=%s En=%b | Result=%02h Z=%b P=%b C=%b O=%b",
                 test_name, op_a, op_b, func.name(), enable, 
-                alu_result, zero_flag, negative_flag, carry_flag, signed_overflow);
+                alu_result, zero_flag, positive_flag, carry_flag, signed_overflow);
     endtask
 
     // Test sequence

@@ -20,7 +20,7 @@ module alu#(
     // Outputs
     output  wire [DATA_W-1:0]   alu_result,
     output  wire                    zero_flag,
-    output  wire                    negative_flag,
+    output  wire                    positive_flag,
     output  wire                    carry_flag,
     output  wire                    signed_overflow
 );
@@ -66,7 +66,7 @@ module alu#(
             signed_overflow = 'x; // Not applicable for other operations
         end
         zero_flag = (result == '0);
-        negative_flag = result[DATA_W-1];
+        positive_flag = ~result[DATA_W-1]; // Positive if MSB is 0 (not negative)
     end
 
     assign alu_result = output_enable ? result : 'z;

@@ -36,7 +36,7 @@ module register_file_tb;
     wire [DATA_W-1:0] read_data;
     logic status_write_enable;
     logic zero_flag;
-    logic negative_flag;
+    logic positive_flag;
     logic carry_flag;
     logic overflow_flag;
     wire [D_ADDR_W-1:0] dmar;
@@ -62,7 +62,7 @@ module register_file_tb;
         .read_data(read_data),
         .status_write_enable(status_write_enable),
         .zero_flag(zero_flag),
-        .negative_flag(negative_flag),
+        .positive_flag(positive_flag),
         .carry_flag(carry_flag),
         .overflow_flag(overflow_flag),
         .dmar(dmar),
@@ -94,7 +94,7 @@ module register_file_tb;
         input string test_name
     );
         zero_flag = zero;
-        negative_flag = negative;
+        positive_flag = !negative; // Convert negative input to positive flag
         carry_flag = carry;
         overflow_flag = overflow;
         status_write_enable = 1'b1;
@@ -162,7 +162,7 @@ module register_file_tb;
         read_data_output_enable = 1'b0;
         status_write_enable = 1'b0;
         zero_flag = 1'b0;
-        negative_flag = 1'b0;
+        positive_flag = 1'b0;
         carry_flag = 1'b0;
         overflow_flag = 1'b0;
         
