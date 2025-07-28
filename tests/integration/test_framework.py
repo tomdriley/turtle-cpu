@@ -33,6 +33,7 @@ class TurtleCPUTestFramework:
         self.debug_dir = self.project_root / "tests" / "integration" / "debug_output"
         self.rtl_built = False  # Track if RTL has been built
         self.timing_data = {}  # Store timing information
+        self.test_results = {}  # Store individual test results
         
     def run_command(self, cmd: list, cwd: str = None, capture_output: bool = True) -> Tuple[int, str, str]:
         """Run a shell command and return (return_code, stdout, stderr)"""
@@ -240,16 +241,19 @@ class TurtleCPUTestFramework:
             # Step 1: Assemble the program
             if not self.assemble_program(asm_file, str(binstr_file)):
                 print("❌ Test FAILED: Assembly failed")
+                self.test_results[test_name] = {'status': 'FAILED', 'time': time.time() - test_start_time}
                 return False
             
             # Step 2: Run simulator
             if not self.run_simulator(str(binstr_file), str(sim_memory_dump), str(sim_registers_dump)):
                 print("❌ Test FAILED: Simulator failed")
+                self.test_results[test_name] = {'status': 'FAILED', 'time': time.time() - test_start_time}
                 return False
             
             # Step 3: Run RTL simulation
             if not self.run_rtl_simulation(str(binstr_file), str(rtl_memory_dump), str(rtl_registers_dump)):
                 print("❌ Test FAILED: RTL simulation failed")
+                self.test_results[test_name] = {'status': 'FAILED', 'time': time.time() - test_start_time}
                 return False
             
             # Step 4: Compare results
@@ -261,6 +265,7 @@ class TurtleCPUTestFramework:
             
             if memory_match and registers_match:
                 print(f"✅ Test PASSED: RTL and simulator results match! ({test_elapsed:.2f}s total)")
+                self.test_results[test_name] = {'status': 'PASSED', 'time': test_elapsed}
                 
                 # Save debug files if requested
                 if self.save_debug:
@@ -277,6 +282,7 @@ class TurtleCPUTestFramework:
                 return True
             else:
                 print(f"❌ Test FAILED: Results don't match ({test_elapsed:.2f}s total)")
+                self.test_results[test_name] = {'status': 'FAILED', 'time': test_elapsed}
                 
                 # Copy files to a persistent location for debugging
                 debug_dir = self.debug_dir / test_name
@@ -291,24 +297,19 @@ class TurtleCPUTestFramework:
                 return False
     
     def print_timing_summary(self):
-        """Print a summary of timing data collected during tests"""
-        print(f"\n{'='*60}")
-        print("⏱️  PERFORMANCE SUMMARY")
-        print(f"{'='*60}")
-        
+        """Print a concise summary of timing data collected during tests"""
         if not self.timing_data:
-            print("No timing data collected")
             return
         
-        # Calculate total test time first (this is the real total)
+        print(f"\n⏱️  PERFORMANCE BREAKDOWN")
+        print(f"{'─'*40}")
+        
+        # Calculate total test time
         total_test_time = 0
         if 'full_test' in self.timing_data:
             total_test_time = sum(self.timing_data['full_test'])
-            print(f"Total Test Suite Time: {total_test_time:.2f}s")
-            print(f"Number of Tests: {len(self.timing_data['full_test'])}")
-            print()
         
-        # Show breakdown by individual operations (excluding full_test to avoid double counting)
+        # Show breakdown by individual operations
         operation_order = ['assembly', 'simulation', 'rtl_simulation', 'comparison']
         
         for operation in operation_order:
@@ -316,20 +317,15 @@ class TurtleCPUTestFramework:
                 times = self.timing_data[operation]
                 total_time = sum(times)
                 avg_time = total_time / len(times)
-                min_time = min(times)
-                max_time = max(times)
                 
                 # Calculate percentage of total test time
                 if total_test_time > 0:
                     percentage = (total_time / total_test_time) * 100
-                    print(f"{operation.replace('_', ' ').title()}: {percentage:.1f}% ({total_time:.2f}s total)")
+                    print(f"  {operation.replace('_', ' ').title():<15}: {percentage:4.1f}% ({avg_time:.2f}s avg)")
                 else:
-                    print(f"{operation.replace('_', ' ').title()}: {total_time:.2f}s total")
-                
-                print(f"  Count: {len(times)}, Avg: {avg_time:.2f}s, Min: {min_time:.2f}s, Max: {max_time:.2f}s")
-                print()
+                    print(f"  {operation.replace('_', ' ').title():<15}: {avg_time:.2f}s avg")
         
-        # Calculate overhead (time not accounted for by individual operations)
+        # Calculate and show overhead if significant
         if total_test_time > 0:
             accounted_time = sum([
                 sum(self.timing_data.get(op, [])) 
@@ -337,11 +333,54 @@ class TurtleCPUTestFramework:
                 if op in self.timing_data
             ])
             overhead = total_test_time - accounted_time
-            if overhead > 0.1:  # Only show if significant
+            if overhead > 0.1:
                 overhead_percentage = (overhead / total_test_time) * 100
-                print(f"Framework Overhead: {overhead_percentage:.1f}% ({overhead:.2f}s total)")
-                print("  (File I/O, temporary directory management, etc.)")
-                print()
+                print(f"  {'Framework':<15}: {overhead_percentage:4.1f}% (overhead)")
+        
+        print(f"{'─'*40}")
+        print(f"  {'Total Time':<15}: {total_test_time:.2f}s")
+    
+    def print_test_results_summary(self):
+        """Print a detailed summary of all test results"""
+        if not self.test_results:
+            return
+        
+        passed_tests = [name for name, result in self.test_results.items() if result['status'] == 'PASSED']
+        failed_tests = [name for name, result in self.test_results.items() if result['status'] == 'FAILED']
+        
+        print(f"\n📊 TEST RESULTS SUMMARY")
+        print(f"{'='*60}")
+        
+        # Overall statistics
+        total_tests = len(self.test_results)
+        passed_count = len(passed_tests)
+        failed_count = len(failed_tests)
+        success_rate = (passed_count / total_tests * 100) if total_tests > 0 else 0
+        
+        print(f"Total Tests:    {total_tests:3d}")
+        print(f"Passed:         {passed_count:3d}  ({success_rate:5.1f}%)")
+        print(f"Failed:         {failed_count:3d}  ({100-success_rate:5.1f}%)")
+        
+        if total_tests > 0:
+            total_time = sum(result['time'] for result in self.test_results.values())
+            avg_time = total_time / total_tests
+            print(f"Average Time:   {avg_time:5.2f}s per test")
+        
+        # Show failed tests if any
+        if failed_tests:
+            print(f"\n❌ FAILED TESTS:")
+            for test_name in failed_tests:
+                test_time = self.test_results[test_name]['time']
+                print(f"  • {test_name:<30} ({test_time:.2f}s)")
+        
+        # Show passed tests
+        if passed_tests:
+            print(f"\n✅ PASSED TESTS:")
+            for test_name in passed_tests:
+                test_time = self.test_results[test_name]['time']
+                print(f"  • {test_name:<30} ({test_time:.2f}s)")
+                
+        print(f"{'='*60}")
     
     def run_test_suite(self, test_patterns: list = None) -> bool:
         """Run a suite of tests"""
@@ -369,17 +408,15 @@ class TurtleCPUTestFramework:
                 else:
                     failed += 1
             except Exception as e:
+                test_name = Path(test_file).stem
                 print(f"❌ Test FAILED with exception: {e}")
+                self.test_results[test_name] = {'status': 'FAILED', 'time': 0.0}
                 failed += 1
         
         suite_elapsed = time.time() - suite_start_time
         
-        print(f"\n{'='*60}")
-        print(f"📊 Test Results: {passed} passed, {failed} failed")
-        print(f"⏱️  Total Suite Time: {suite_elapsed:.2f}s")
-        print(f"{'='*60}")
-        
-        # Print detailed timing summary
+        # Print comprehensive summary
+        self.print_test_results_summary()
         self.print_timing_summary()
         
         return failed == 0
@@ -400,6 +437,12 @@ def main():
     if args.test_file:
         # Test a single file
         success = framework.test_assembly_program(args.test_file, args.test_name)
+        
+        # Print summary for single test
+        if framework.test_results:
+            framework.print_test_results_summary()
+            framework.print_timing_summary()
+        
         sys.exit(0 if success else 1)
     elif args.test_suite:
         # Run the full test suite
