@@ -48,6 +48,7 @@ module turtle_cpu_top#(
     wire jump_branch_select; // Enable signal for jump/branch instructions
     wire immediate_select; // Select immediate address for branch
     wire unconditional_branch; // Flag for unconditional branches
+    wire pc_relative; // Flag for PC-relative addressing
     branch_condition_e branch_condition; // Branch condition to evaluate
 
     // Program Counter to Instruction Memory connections
@@ -108,6 +109,7 @@ module turtle_cpu_top#(
         .unconditional_branch(unconditional_branch),
         .status_register(register_data_bus),
         .branch_condition(branch_condition),
+        .pc_relative(pc_relative),
         .pc(pc)
     );
         
@@ -143,7 +145,8 @@ module turtle_cpu_top#(
         .unconditional_branch(unconditional_branch),
         .branch_condition(branch_condition),
         .alu_output_enable(alu_output_enable),
-        .alu_function(alu_function)
+        .alu_function(alu_function),
+        .pc_relative(pc_relative)
     );
 
     register_file #(

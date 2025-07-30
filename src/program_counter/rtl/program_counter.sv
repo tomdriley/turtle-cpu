@@ -8,6 +8,7 @@
 /* verilator lint_off IMPORTSTAR */
 import register_file_pkg::*;
 import program_counter_pkg::*;
+import decoder_pkg::*;
 /* verilator lint_on IMPORTSTAR */
 
 module program_counter #(
@@ -24,14 +25,21 @@ module program_counter #(
     input logic unconditional_branch, // Flag for unconditional branches
     input logic [DATA_W-1:0] status_register, // Status register containing flags
     input branch_condition_e branch_condition, // Branch condition to evaluate
+    input logic pc_relative, // Flag for PC-relative addressing
     output logic [I_ADDR_W-1:0] pc // Program Counter output
 );
     logic [I_ADDR_W-1:0] next_pc; // Next program counter value
     logic [I_ADDR_W-1:0] branch_addr; // Address to branch to if condition is met
+    logic [I_ADDR_W-1:0] target_offset; // Target address or offset
     logic branch_taken; // Flag indicating if a branch is taken
     logic [DATA_W-1:4] status_register_unused; // Unused bits in status register
 
-    assign branch_addr = (immediate_select) ? address_immediate : imar;
+    // Select the target offset/address (immediate or register)
+    assign target_offset = (immediate_select) ? address_immediate : imar;
+    
+    // Calculate final branch address: PC-relative adds offset to PC, absolute uses target directly
+    assign branch_addr = pc_relative ? (pc + target_offset) : target_offset;
+    
     assign next_pc = branch_taken ? branch_addr : (pc + INST_W_BYTES[I_ADDR_W-1:0]); // Increment PC by instruction width if not branching
     assign status_register_unused = status_register[DATA_W-1:4]; // Unused bits in status register
     

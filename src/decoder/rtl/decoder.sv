@@ -38,6 +38,7 @@ module decoder#(
     output wire immediate_address_select,
     output wire unconditional_branch,
     output wire branch_condition_e branch_condition,
+    output wire pc_relative,
     // Outputs to ALU
     output wire alu_output_enable,
     output alu_func_e alu_function
@@ -45,6 +46,7 @@ module decoder#(
     logic branch_instruction;
     opcode_e op;
     reg_mem_func_e reg_mem_func;
+    logic [3:0] function_bits;
     logic [DATA_W-1:0] data_immediate;
     logic acc_immediate_output_enable;
     logic operand_b_immediate_output_enable;
@@ -53,11 +55,16 @@ module decoder#(
     assign branch_instruction = instruction[BRANCH_INSTRUCTION_OFFSET];
     assign branch_condition = branch_condition_e'(instruction[BRANCH_CONDITION_MSB:BRANCH_CONDITION_LSB]);
     assign op = opcode_e'(instruction[OP_MSB:OP_LSB]);
-    assign alu_function = alu_func_e'(instruction[ALU_FUNC_MSB:ALU_FUNC_LSB]);
-    assign reg_mem_func = reg_mem_func_e'(instruction[REG_MEM_FUNC_MSB:REG_MEM_FUNC_LSB]);
+    assign function_bits = instruction[FUNCTION_MSB:FUNCTION_LSB];
+    assign alu_function = alu_func_e'(function_bits);
+    assign reg_mem_func = reg_mem_func_e'(function_bits);
     assign address_immediate = instruction[ADDRESS_IMMEDIATE_MSB:ADDRESS_IMMEDIATE_LSB];
     assign data_immediate = instruction[DATA_IMMEDIATE_MSB:DATA_IMMEDIATE_LSB];
     assign reg_addr = instruction[REG_ADDR_MSB:REG_ADDR_LSB];
+
+    // PC-relative control: All branches and JMPI are relative, JMPR is relative, JMP is absolute
+    assign pc_relative = branch_instruction || (op == OPCODE_JUMP_IMM) || 
+                         (op == OPCODE_JUMP_REG && function_bits[0] == 1'b0); // JMPR=0, JMP=1
 
     // Opcode decoding logic
     assign acc_immediate_output_enable = (op == OPCODE_REG_MEMORY && reg_mem_func == SET);
