@@ -77,6 +77,7 @@ module decoder#(
             && (
                 reg_mem_func == SET
                 || reg_mem_func == GET
+                || reg_mem_func == LOAD
             )
         )
     );
