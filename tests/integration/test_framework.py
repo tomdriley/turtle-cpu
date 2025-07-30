@@ -35,6 +35,38 @@ class TurtleCPUTestFramework:
         self.timing_data = {}  # Store timing information
         self.test_results = {}  # Store individual test results
         
+    def resolve_test_file(self, test_name_or_path: str) -> Optional[str]:
+        """Resolve a test name or path to a full file path"""
+        test_path = Path(test_name_or_path)
+        
+        # If it's already an absolute path and exists, use it
+        if test_path.is_absolute() and test_path.exists():
+            return str(test_path)
+        
+        # If it's a relative path and exists, make it absolute
+        if test_path.exists():
+            return str(test_path.resolve())
+        
+        # If it's just a name (like "load_test"), try to find it in test directories
+        if not test_path.suffix:  # No file extension
+            test_name = test_name_or_path
+            
+            # Search in common test directories
+            search_dirs = [
+                self.project_root / "tests" / "integration" / "test_programs",
+                self.project_root / "turtle-toolkit" / "examples",
+            ]
+            
+            for search_dir in search_dirs:
+                if search_dir.exists():
+                    # Try with .asm extension
+                    test_file = search_dir / f"{test_name}.asm"
+                    if test_file.exists():
+                        return str(test_file)
+        
+        # If we still haven't found it, try the original path
+        return test_name_or_path
+        
     def run_command(self, cmd: list, cwd: str = None, capture_output: bool = True) -> Tuple[int, str, str]:
         """Run a shell command and return (return_code, stdout, stderr)"""
         print(f"Running: {' '.join(cmd)}")
@@ -425,6 +457,7 @@ class TurtleCPUTestFramework:
 def main():
     parser = argparse.ArgumentParser(description="Turtle CPU Automated Test Framework")
     parser.add_argument("--test-file", "-f", help="Single assembly file to test")
+    parser.add_argument("--test", "-t", dest="test_file", help="Single assembly file to test (alias for --test-file)")
     parser.add_argument("--test-name", "-n", help="Name for the test (defaults to filename)")
     parser.add_argument("--test-suite", "-s", action="store_true", help="Run the full test suite")
     parser.add_argument("--project-root", "-r", help="Project root directory (defaults to script location)")
@@ -435,8 +468,19 @@ def main():
     framework = TurtleCPUTestFramework(args.project_root, args.save_debug)
     
     if args.test_file:
+        # Resolve the test file path
+        resolved_test_file = framework.resolve_test_file(args.test_file)
+        
+        # Check if the resolved file exists
+        if not Path(resolved_test_file).exists():
+            print(f"❌ Test file not found: {resolved_test_file}")
+            print(f"   Searched for: {args.test_file}")
+            sys.exit(1)
+        
+        print(f"🧪 Testing: {resolved_test_file}")
+        
         # Test a single file
-        success = framework.test_assembly_program(args.test_file, args.test_name)
+        success = framework.test_assembly_program(resolved_test_file, args.test_name)
         
         # Print summary for single test
         if framework.test_results:
