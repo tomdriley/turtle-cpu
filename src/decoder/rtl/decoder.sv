@@ -68,9 +68,9 @@ module decoder#(
                          (op == OPCODE_JUMP_REG && function_bits[0] == 1'b0); // JMPR=0, JMP=1
 
     // Opcode decoding logic
-    assign acc_immediate_output_enable = (op == OPCODE_REG_MEMORY && reg_mem_func == SET);
-    assign operand_b_immediate_output_enable = (op == OPCODE_ARITH_LOGIC_IMM);
-    assign acc_write_enable = (
+    assign acc_immediate_output_enable = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == SET);
+    assign operand_b_immediate_output_enable = !branch_instruction && (op == OPCODE_ARITH_LOGIC_IMM);
+    assign acc_write_enable = !branch_instruction && (
         op == OPCODE_ARITH_LOGIC 
         || op == OPCODE_ARITH_LOGIC_IMM 
         || (
@@ -82,16 +82,16 @@ module decoder#(
             )
         )
     );
-    assign write_put_acc = (op == OPCODE_REG_MEMORY && reg_mem_func == PUT);
-    assign read_get_acc = (op == OPCODE_REG_MEMORY && reg_mem_func == GET);
+    assign write_put_acc = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == PUT);
+    assign read_get_acc = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == GET);
     assign read_data_output_enable = (op == OPCODE_ARITH_LOGIC || branch_instruction);
-    assign status_write_enable = (op == OPCODE_ARITH_LOGIC || op == OPCODE_ARITH_LOGIC_IMM);
-    assign data_memory_write_enable = (op == OPCODE_REG_MEMORY && reg_mem_func == STORE);
-    assign data_memory_output_enable = (op == OPCODE_REG_MEMORY && reg_mem_func == LOAD);
+    assign status_write_enable = !branch_instruction && (op == OPCODE_ARITH_LOGIC || op == OPCODE_ARITH_LOGIC_IMM);
+    assign data_memory_write_enable = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == STORE);
+    assign data_memory_output_enable = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == LOAD);
     assign jump_branch_select = (branch_instruction || op == OPCODE_JUMP_REG || op == OPCODE_JUMP_IMM);
     assign immediate_address_select = (branch_instruction || op == OPCODE_JUMP_IMM);
     assign unconditional_branch = (op == OPCODE_JUMP_IMM);
-    assign alu_output_enable = (op == OPCODE_ARITH_LOGIC || op == OPCODE_ARITH_LOGIC_IMM);
+    assign alu_output_enable = !branch_instruction && (op == OPCODE_ARITH_LOGIC || op == OPCODE_ARITH_LOGIC_IMM);
 
     // Assign outputs for immediate values
     // These are tristate outputs, so they will be driven only when the corresponding output enable
