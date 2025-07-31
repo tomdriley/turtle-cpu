@@ -139,7 +139,7 @@ module register_file #(
             // Status register update from ALU flags
             if (status_write_enable) begin
                 status[ZERO_FLAG] <= zero_flag;     // Z/NZ flag
-                status[NEGATIVE_FLAG] <= positive_flag; // P/N flag (now directly positive)
+                status[POSITIVE_FLAG] <= positive_flag; // P/N flag (now directly positive)
                 status[CARRY_FLAG] <= carry_flag;    // CS/CC flag
                 status[OVERFLOW_FLAG] <= overflow_flag; // OS/OC flag
                 // Upper bits remain unchanged

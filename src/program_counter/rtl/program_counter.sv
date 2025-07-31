@@ -56,8 +56,8 @@ module program_counter #(
             unique case (branch_condition)
                 COND_ZERO: branch_taken = status_register[ZERO_FLAG];
                 COND_NOT_ZERO: branch_taken = !status_register[ZERO_FLAG];
-                COND_NEGATIVE: branch_taken = status_register[NEGATIVE_FLAG];
-                COND_POSITIVE: branch_taken = !status_register[NEGATIVE_FLAG];
+                COND_NEGATIVE: branch_taken = !status_register[POSITIVE_FLAG]; // POSITIVE_FLAG bit stores positive flag
+                COND_POSITIVE: branch_taken = status_register[POSITIVE_FLAG];  // POSITIVE_FLAG bit stores positive flag
                 COND_CARRY_SET: branch_taken = status_register[CARRY_FLAG];
                 COND_CARRY_CLEARED: branch_taken = !status_register[CARRY_FLAG];
                 COND_OVERFLOW_SET: branch_taken = status_register[OVERFLOW_FLAG];

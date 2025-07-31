@@ -26,7 +26,7 @@ package register_file_pkg;
 
     typedef enum int {
         ZERO_FLAG     = 0,
-        NEGATIVE_FLAG = 1,
+        POSITIVE_FLAG = 1,
         CARRY_FLAG    = 2,
         OVERFLOW_FLAG = 3
     } status_flag_e;

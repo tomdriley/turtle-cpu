@@ -56,13 +56,13 @@ module program_counter_tb;
     // Task to setup status register with specific flags
     task automatic setup_status_flags(
         input logic zero,
-        input logic negative,
+        input logic positive,
         input logic carry,
         input logic overflow
     );
         status_register = '0;
         status_register[ZERO_FLAG] = zero;
-        status_register[NEGATIVE_FLAG] = negative;
+        status_register[POSITIVE_FLAG] = positive;
         status_register[CARRY_FLAG] = carry;
         status_register[OVERFLOW_FLAG] = overflow;
     endtask
@@ -107,12 +107,12 @@ module program_counter_tb;
         input logic use_immediate,
         input branch_condition_e condition,
         input logic zero_flag,
-        input logic negative_flag,
+        input logic positive_flag,
         input logic carry_flag,
         input logic overflow_flag,
         input string test_name
     );
-        setup_status_flags(zero_flag, negative_flag, carry_flag, overflow_flag);
+        setup_status_flags(zero_flag, positive_flag, carry_flag, overflow_flag);
         if (use_immediate) begin
             address_immediate = target_addr;
             immediate_select = 1'b1;

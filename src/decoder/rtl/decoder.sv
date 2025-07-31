@@ -9,6 +9,7 @@
 import alu_pkg::*;
 import program_counter_pkg::*;
 import decoder_pkg::*;
+import register_file_pkg::*;
 /* verilator lint_on IMPORTSTAR */
 
 module decoder#(
@@ -60,7 +61,7 @@ module decoder#(
     assign reg_mem_func = reg_mem_func_e'(function_bits);
     assign address_immediate = instruction[ADDRESS_IMMEDIATE_MSB:ADDRESS_IMMEDIATE_LSB];
     assign data_immediate = instruction[DATA_IMMEDIATE_MSB:DATA_IMMEDIATE_LSB];
-    assign reg_addr = instruction[REG_ADDR_MSB:REG_ADDR_LSB];
+    assign reg_addr = branch_instruction ? REG_STATUS : instruction[REG_ADDR_MSB:REG_ADDR_LSB]; // Use STATUS register for branch instructions
 
     // PC-relative control: All branches and JMPI are relative, JMPR is relative, JMP is absolute
     assign pc_relative = branch_instruction || (op == OPCODE_JUMP_IMM) || 
