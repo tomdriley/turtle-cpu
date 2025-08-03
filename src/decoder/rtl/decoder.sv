@@ -90,7 +90,7 @@ module decoder#(
     assign data_memory_output_enable = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == LOAD);
     assign jump_branch_select = (branch_instruction || op == OPCODE_JUMP_REG || op == OPCODE_JUMP_IMM);
     assign immediate_address_select = (branch_instruction || op == OPCODE_JUMP_IMM);
-    assign unconditional_branch = (op == OPCODE_JUMP_IMM);
+    assign unconditional_branch = (op == OPCODE_JUMP_IMM) && !branch_instruction;
     assign alu_output_enable = !branch_instruction && (op == OPCODE_ARITH_LOGIC || op == OPCODE_ARITH_LOGIC_IMM);
 
     // Assign outputs for immediate values

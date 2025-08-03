@@ -2,6 +2,7 @@
 ; Expected result: ACC = 1 (SET 1 should execute)
 start:
     SET -1
+    ADDI 0   ; NOP - sets flags based on ACC=-1 (negative)
     BP end
     SET 1
 end:
