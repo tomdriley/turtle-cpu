@@ -1,7 +1,7 @@
-`ifndef ALU
-`define ALU
+`ifndef ALU_GATES
+`define ALU_GATES
 
-// alu.sv
+// alu_gates.sv
 // author: Tom Riley
 // date: 2025-07-05
 
@@ -74,4 +74,4 @@ module alu#(
     assign alu_result = output_enable ? result : 'z;
 endmodule: alu
 
-`endif // ALU
+`endif // ALU_GATES

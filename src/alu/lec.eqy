@@ -1,0 +1,19 @@
+[gold]
+# The "gold" reference design - known to be correct
+read_verilog -sv rtl/alu.v
+prep -top alu
+
+[gate]
+# The "gate" design under test - to be verified for equivalence
+read_verilog -sv rtl/alu_gates.v
+prep -top alu
+
+[collect *]
+# Collect all logic for equivalence checking
+# For this simple counter example, we check everything together
+
+[strategy sby]
+# Use SBY as the equivalence checking strategy
+use sby
+depth 10
+engine smtbmc
