@@ -26,49 +26,37 @@ module alu#(
     /* verilator lint_on IMPORTSTAR */
 
     logic [DATA_W-1:0] result;
-    alu_func_e alu_func_enum = alu_func_e'(alu_func);
+    logic [DATA_W-1:0] invert_b;
+    logic [DATA_W-1:0] second_summand;
+    logic [DATA_W:0] sum;
+    logic carry_in;
+    logic result_sign_not_match_a;
+    logic a_sign_not_match_b;
+
+    assign invert_b = ~operand_b;
+    assign second_summand = alu_func[0] ? invert_b : operand_b;
+    assign carry_in = alu_func[0];
+    assign sum = operand_a + second_summand + carry_in;
+    assign carry_flag = sum[DATA_W]; // Carry out is the MSB of the sum
+    assign result_sign_not_match_a = (result[DATA_W-1] != operand_a[DATA_W-1]);
+    assign a_sign_not_match_b = (operand_a[DATA_W-1] != operand_b[DATA_W-1]);
+
+    assign result = (
+        alu_func[2]
+        ? alu_func[1]
+            ? ~operand_a // NOT operation
+            : alu_func[0]
+                ? operand_a ^ operand_b // XOR operation
+                : operand_a | operand_b // OR operation
+        : alu_func[1]
+            ? operand_a & operand_b // AND operation
+            : sum[DATA_W-1:0] // ADD/SUB operation
+    ); 
 
     always_comb begin
-        case (alu_func_enum)
-            ADD: begin
-                {carry_flag, result} <= operand_a + operand_b;
-            end
-            SUB: begin
-                {carry_flag, result} <= operand_a - operand_b;
-            end
-            AND: begin
-                result <= operand_a & operand_b;
-                carry_flag <= 'x;
-            end
-            OR: begin
-                result <= operand_a | operand_b;
-                carry_flag <= 'x;
-            end
-            XOR: begin
-                result <= operand_a ^ operand_b;
-                carry_flag <= 'x;
-            end
-            INV: begin
-                result <= ~operand_a;
-                carry_flag <= 'x;
-            end
-            default: begin
-                result <= 'x;
-                carry_flag <= 'x;
-            end
-        endcase
-    end
-
-    always_comb begin
-        if (alu_func_enum == ADD) begin
-            signed_overflow <= (operand_a[DATA_W-1] == operand_b[DATA_W-1]) && (result[DATA_W-1] != operand_a[DATA_W-1]);
-        end else if (alu_func_enum == SUB) begin
-            signed_overflow <= (operand_a[DATA_W-1] != operand_b[DATA_W-1]) && (result[DATA_W-1] != operand_a[DATA_W-1]);
-        end else begin
-            signed_overflow <= 'x; // Not applicable for other operations
-        end
-        zero_flag <= (result == '0);
-        positive_flag <= ~result[DATA_W-1]; // Positive if MSB is 0 (not negative)
+        signed_overflow = result_sign_not_match_a & ~(a_sign_not_match_b ^ (alu_func[0]));
+        zero_flag = (result == '0);
+        positive_flag = ~result[DATA_W-1]; // Positive if MSB is 0 (not negative)
     end
 
     assign alu_result = output_enable ? result : 'z;

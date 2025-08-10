@@ -9,6 +9,7 @@ WAVE_FILE := waves.vcd
 
 SV2V_FILES := $(ALU_DIR)/rtl/alu_pkg.sv $(ALU_DIR)/rtl/alu.sv $(ALU_DIR)/rtl/alu_gates.sv
 EQY_FILE := lec.eqy
+lec: sv2v # Require sv2v to run before lec
 
 SYNTH_SCRIPT := $(ALU_DIR)/synth.ys
 synth: sv2v # Require sv2v to run before synthesis

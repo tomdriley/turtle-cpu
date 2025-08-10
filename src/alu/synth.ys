@@ -1,4 +1,4 @@
-read_verilog rtl/alu.v
+read_verilog rtl/alu_gates.v
 hierarchy -check -top alu
 
 show -format svg -prefix alu_start -colors 1

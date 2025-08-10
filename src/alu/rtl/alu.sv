@@ -26,49 +26,60 @@ module alu#(
     /* verilator lint_on IMPORTSTAR */
 
     logic [DATA_W-1:0] result;
+    logic [DATA_W:0] diff_result;
     alu_func_e alu_func_enum = alu_func_e'(alu_func);
 
     always_comb begin
         case (alu_func_enum)
             ADD: begin
-                {carry_flag, result} <= operand_a + operand_b;
+                {carry_flag, result} = operand_a + operand_b;
+                diff_result = 'x;
             end
             SUB: begin
-                {carry_flag, result} <= operand_a - operand_b;
+                diff_result = {1'b0, operand_a} - {1'b0, operand_b};
+                result = diff_result[DATA_W-1:0];
+                carry_flag = ~diff_result[DATA_W]; // Borrow flag
             end
             AND: begin
-                result <= operand_a & operand_b;
-                carry_flag <= 'x;
+                result = operand_a & operand_b;
+                carry_flag = 'x;
+                diff_result = 'x;
+
             end
             OR: begin
-                result <= operand_a | operand_b;
-                carry_flag <= 'x;
+                result = operand_a | operand_b;
+                carry_flag = 'x;
+                diff_result = 'x;
+
             end
             XOR: begin
-                result <= operand_a ^ operand_b;
-                carry_flag <= 'x;
+                result = operand_a ^ operand_b;
+                carry_flag = 'x;
+                diff_result = 'x;
             end
             INV: begin
-                result <= ~operand_a;
-                carry_flag <= 'x;
+                result = ~operand_a;
+                carry_flag = 'x;
+                diff_result = 'x;
             end
             default: begin
-                result <= 'x;
-                carry_flag <= 'x;
+                result = 'x;
+                carry_flag = 'x;
+                diff_result = 'x;
             end
         endcase
     end
 
     always_comb begin
         if (alu_func_enum == ADD) begin
-            signed_overflow <= (operand_a[DATA_W-1] == operand_b[DATA_W-1]) && (result[DATA_W-1] != operand_a[DATA_W-1]);
+            signed_overflow = (operand_a[DATA_W-1] == operand_b[DATA_W-1]) && (result[DATA_W-1] != operand_a[DATA_W-1]);
         end else if (alu_func_enum == SUB) begin
-            signed_overflow <= (operand_a[DATA_W-1] != operand_b[DATA_W-1]) && (result[DATA_W-1] != operand_a[DATA_W-1]);
+            signed_overflow = (operand_a[DATA_W-1] != operand_b[DATA_W-1]) && (result[DATA_W-1] != operand_a[DATA_W-1]);
         end else begin
-            signed_overflow <= 'x; // Not applicable for other operations
+            signed_overflow = 'x; // Not applicable for other operations
         end
-        zero_flag <= (result == '0);
-        positive_flag <= ~result[DATA_W-1]; // Positive if MSB is 0 (not negative)
+        zero_flag = (result == '0);
+        positive_flag = ~result[DATA_W-1]; // Positive if MSB is 0 (not negative)
     end
 
     assign alu_result = output_enable ? result : 'z;

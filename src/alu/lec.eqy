@@ -10,7 +10,6 @@ prep -top alu
 
 [collect *]
 # Collect all logic for equivalence checking
-# For this simple counter example, we check everything together
 
 [strategy sby]
 # Use SBY as the equivalence checking strategy
