@@ -4,3 +4,6 @@
 [submodule "rtl-toolkit"]
 	path = rtl-toolkit
 	url = https://github.com/tomdriley/rtl.git
+[submodule "docs"]
+	path = docs
+	url = https://github.com/tdrinfinity/turtle-docs.git
