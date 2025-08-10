@@ -7,3 +7,6 @@
 [submodule "docs"]
 	path = docs
 	url = https://github.com/tdrinfinity/turtle-docs.git
+[submodule "pcb"]
+	path = pcb
+	url = https://github.com/tdrinfinity/turtle-pcb.git
