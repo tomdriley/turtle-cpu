@@ -17,6 +17,11 @@ RUN apt-get update && apt-get install -y \
     vim \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Git LFS
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash \
+    && apt-get install -y git-lfs \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set up pipx environment
 ENV PIPX_BIN_DIR=/usr/local/bin
 ENV PIPX_HOME=/usr/local/pipx

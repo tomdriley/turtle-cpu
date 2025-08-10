@@ -9,6 +9,12 @@
         },
         {
             "path": "../rtl-toolkit"
+        },
+        {
+            "path": "../pcb"
+        },
+        {
+            "path": "../docs"
         }
     ],
     "settings": {
