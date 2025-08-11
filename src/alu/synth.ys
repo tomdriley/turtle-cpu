@@ -1,12 +1,12 @@
-read_verilog rtl/alu_gates.v
+read_verilog scratch/alu_gates.v
 hierarchy -check -top alu
 
-show -format svg -prefix alu_start -colors 1
+show -format svg -prefix scratch/alu_start -colors 1
 
 proc;;
-show -format svg -prefix alu_proc -colors 1
+show -format svg -prefix scratch/alu_proc -colors 1
 
 opt;;
-show -format svg -prefix alu_opt -colors 1
+show -format svg -prefix scratch/alu_opt -colors 1
 
 stat

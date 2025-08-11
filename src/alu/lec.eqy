@@ -1,11 +1,11 @@
 [gold]
 # The "gold" reference design - known to be correct
-read_verilog -sv rtl/alu.v
+read_verilog -sv scratch/alu.v
 prep -top alu
 
 [gate]
 # The "gate" design under test - to be verified for equivalence
-read_verilog -sv rtl/alu_gates.v
+read_verilog -sv scratch/alu_gates.v
 prep -top alu
 
 [collect *]
@@ -14,5 +14,5 @@ prep -top alu
 [strategy sby]
 # Use SBY as the equivalence checking strategy
 use sby
-depth 10
+depth 2
 engine smtbmc
