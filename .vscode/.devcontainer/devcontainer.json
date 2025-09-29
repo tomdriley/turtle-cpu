@@ -46,9 +46,6 @@
 		}
 	},
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "cd /workspaces/turtle-cpu/turtle-toolkit && poetry config virtualenvs.in-project true && poetry install && cd /workspaces/turtle-cpu/rtl-toolkit && make setup"
-	// Configure tool-specific properties.
-	// "customizations": {},
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+	"postCreateCommand": "sudo chown -R vscode:vscode /workspaces && cd /workspaces/turtle-cpu/turtle-toolkit && poetry config virtualenvs.in-project true && poetry config virtualenvs.create true && poetry install && cd /workspaces/turtle-cpu/rtl-toolkit && make setup",
+	"remoteUser": "vscode"
 }

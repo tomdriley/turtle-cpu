@@ -1,6 +1,16 @@
 # Use the official Python Dev Container base image
 FROM mcr.microsoft.com/devcontainers/python:3.11
 
+# Install Node.js 24
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+    && apt-get install -y nodejs
+
+# Fix permissions for Python site-packages and ensure non-root user owns critical directories
+RUN chmod -R 777 /usr/local/lib/python3.11/site-packages/ \
+    && chmod -R 777 /usr/local/bin/ \
+    && mkdir -p /home/vscode/.cache \
+    && chown -R vscode:vscode /home/vscode/.cache
+
 # Install system-level and RTL development dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
