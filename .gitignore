@@ -48,3 +48,6 @@ temp/
 tmp/
 scratch/
 build_*/
+
+# Downloaded PDK cache (created by rtl-toolkit `make pdk-sky130`)
+rtl-toolkit/.pdk/
