@@ -51,3 +51,28 @@ build_*/
 
 # Downloaded PDK cache (created by rtl-toolkit `make pdk-sky130`)
 rtl-toolkit/.pdk/
+
+# Vivado / XSim generated artifacts
+.Xil/
+*.jou
+vivado*.log
+vivado_pid*.str
+*.str
+*.pb
+*.wdb
+webtalk*.log
+webtalk*.jou
+usage_statistics_*.xml
+hs_err_pid*.log
+
+# Vivado project output directories (keep the .xpr)
+*.cache/
+*.sim/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.gen/
+*.srcs/
+
+# Vivado project file
+*.xpr
