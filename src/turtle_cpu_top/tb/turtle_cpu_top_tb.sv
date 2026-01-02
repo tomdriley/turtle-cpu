@@ -26,11 +26,26 @@ module turtle_cpu_top_tb;
         .pulse_clk_btn(pulse_clk_btn)
     );
 
+    function automatic string dir_of(input string path);
+        int i;
+        for (i = path.len() - 1; i >= 0; i--) begin
+            if (path[i] == "/") begin
+                if (i == 0) return "/";
+                return path.substr(0, i - 1);
+            end
+        end
+        return ".";
+    endfunction
+
     // Test sequence
     initial begin
-        string initial_instruction_memory_file = "initial_instruction_memory.txt";
-        string final_data_memory_file = "final_data_memory.txt";
-        string final_register_file = "final_register_file.txt";
+        string tb_dir = dir_of(`__FILE__);
+        string turtle_cpu_top_dir = {tb_dir, "/.."};
+
+        // Defaults use absolute paths so xsim can find the files regardless of run directory.
+        string initial_instruction_memory_file = {turtle_cpu_top_dir, "/initial_instruction_memory.txt"};
+        string final_data_memory_file = {turtle_cpu_top_dir, "/final_data_memory.txt"};
+        string final_register_file = {turtle_cpu_top_dir, "/final_register_file.txt"};
 
         reset_btn = 1;
         manual_clk_sw = 0;
@@ -82,7 +97,7 @@ module turtle_cpu_top_tb;
                 uut.decoder_inst.branch_instruction,
                 uut.jump_branch_select,
                 uut.unconditional_branch,
-                uut.decoder_inst.op.name
+                uut.decoder_inst.op.name()
             );
             
             // Show the actual instruction classification
@@ -90,11 +105,19 @@ module turtle_cpu_top_tb;
                 $display("  BRANCH_INSTRUCTION: cond=%s, addr_imm=0x%03h", 
                     uut.branch_condition.name(), uut.address_immediate);
             end else begin
-                $display("  NON_BRANCH: op=%s, func=%s", 
-                    uut.decoder_inst.op.name,
-                    uut.decoder_inst.op == OPCODE_REG_MEMORY ? uut.decoder_inst.reg_mem_func.name : 
-                    uut.decoder_inst.alu_output_enable ? uut.decoder_inst.alu_function.name : "N/A"
-                );
+                string op_name;
+                string func_name;
+
+                op_name = uut.decoder_inst.op.name();
+                if (uut.decoder_inst.op == OPCODE_REG_MEMORY) begin
+                    func_name = uut.decoder_inst.reg_mem_func.name();
+                end else if (uut.decoder_inst.alu_output_enable === 1'b1) begin
+                    func_name = uut.decoder_inst.alu_function.name();
+                end else begin
+                    func_name = "N/A";
+                end
+
+                $display("  NON_BRANCH: op=%s, func=%s", op_name, func_name);
             end
             
             $display("  STATE: acc=0x%02h, gpr=%p", uut.acc_out, uut.register_file_inst.gpr);

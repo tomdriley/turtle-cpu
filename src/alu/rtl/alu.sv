@@ -15,7 +15,7 @@ module alu#(
     input   wire [ALU_FUNC_W-1:0]   alu_func,
     input   wire                    output_enable,
     // Outputs
-    output  logic [DATA_W-1:0]      alu_result,
+    output  tri   [DATA_W-1:0]      alu_result,
     output  logic                   zero_flag,
     output  logic                   positive_flag,
     output  logic                   carry_flag,
@@ -82,7 +82,11 @@ module alu#(
         positive_flag = ~result[DATA_W-1]; // Positive if MSB is 0 (not negative)
     end
 
-    assign alu_result = output_enable ? result : 'z;
+    tristate_driver #(.DATA_W(DATA_W)) alu_result_driver (
+        .en(output_enable),
+        .d(result),
+        .bus(alu_result)
+    );
 endmodule: alu
 
 `endif // ALU

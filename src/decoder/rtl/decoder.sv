@@ -22,8 +22,8 @@ module decoder#(
     input wire [INST_W-1:0] instruction,
     // Data/address outputs
     output logic [I_ADDR_W-1:0] address_immediate,
-    output logic [DATA_W-1:0] acc_immediate,
-    output logic [DATA_W-1:0] alu_operand_b_immediate,
+    output tri   [DATA_W-1:0] acc_immediate,
+    output tri   [DATA_W-1:0] alu_operand_b_immediate,
     // Outputs to register file
     output wire acc_write_enable,
     output wire write_put_acc,
@@ -93,10 +93,18 @@ module decoder#(
     assign unconditional_branch = (op == OPCODE_JUMP_IMM) && !branch_instruction;
     assign alu_output_enable = !branch_instruction && (op == OPCODE_ARITH_LOGIC || op == OPCODE_ARITH_LOGIC_IMM);
 
-    // Assign outputs for immediate values
-    // These are tristate outputs, so they will be driven only when the corresponding output enable
-    assign acc_immediate = acc_immediate_output_enable ? data_immediate : 'z;
-    assign alu_operand_b_immediate = operand_b_immediate_output_enable ? data_immediate : 'z;
+    // Assign outputs for immediate values (tri-state bus drivers)
+    tristate_driver #(.DATA_W(DATA_W)) acc_immediate_driver (
+        .en(acc_immediate_output_enable),
+        .d(data_immediate),
+        .bus(acc_immediate)
+    );
+
+    tristate_driver #(.DATA_W(DATA_W)) alu_operand_b_immediate_driver (
+        .en(operand_b_immediate_output_enable),
+        .d(data_immediate),
+        .bus(alu_operand_b_immediate)
+    );
 
 endmodule: decoder
 

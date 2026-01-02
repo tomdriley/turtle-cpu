@@ -14,19 +14,24 @@ module data_memory #(
     input logic [DATA_W-1:0] write_data,
     input logic write_enable,
     input logic output_enable,
-    output logic [DATA_W-1:0] read_data
+    output tri   [DATA_W-1:0] read_data
 );
     logic [DATA_W-1:0] mem [D_MEMORY_DEPTH-1:0];
+    logic [DATA_W-1:0] read_data_val;
+    logic read_data_en;
 
-    // Read operation
+    assign read_data_en = output_enable && !write_enable;
+
+    // Read datapath (value is always computed; tri-state driver controls visibility on bus)
     always_comb begin
-        if (output_enable && !write_enable) begin
-            read_data = mem[data_addr];
-        end
-        else begin
-            read_data = 'z; // High impedance when not reading
-        end
+        read_data_val = mem[data_addr];
     end
+
+    tristate_driver #(.DATA_W(DATA_W)) read_data_driver (
+        .en(read_data_en),
+        .d(read_data_val),
+        .bus(read_data)
+    );
 
     // Write operation
     always_latch begin

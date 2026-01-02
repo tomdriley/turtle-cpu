@@ -36,9 +36,9 @@ module turtle_cpu_top#(
     wire clk;
     wire reset_n;
 
-    // Shared Bus connections
-    wire [DATA_W-1:0] register_data_bus; // Data bus for register file
-    wire [DATA_W-1:0] acc_in_bus; // Input bus for accumulator
+    // Shared Bus connections (multi-driver tri-state buses)
+    tri [DATA_W-1:0] register_data_bus; // Data bus for register file
+    tri [DATA_W-1:0] acc_in_bus; // Input bus for accumulator
 
     // Register File to Program Counter connections
     wire [I_ADDR_W-1:0] imar; // Instruction Memory Address Register
