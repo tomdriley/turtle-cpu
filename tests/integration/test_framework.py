@@ -185,7 +185,9 @@ class TurtleCPUTestFramework:
                 binary_data,
                 max_cycles=10000,
                 dump_memory=memory_dump,
-                dump_registers=registers_dump
+                dump_registers=registers_dump,
+                instruction_fetch_latency_cycles=0,
+                data_memory_latency_cycles=0,
             )
 
             elapsed = time.time() - start_time
