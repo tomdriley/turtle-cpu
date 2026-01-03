@@ -59,7 +59,7 @@ module turtle_cpu_top_tb;
             $display("No initial instruction memory file provided, using default.");
         end
         $display("Loading initial instruction memory from %s", initial_instruction_memory_file);
-        $readmemb(initial_instruction_memory_file, uut.instruction_memory_inst.mem);
+        $readmemb(initial_instruction_memory_file, uut.turtle_cpu_subsystem_inst.instruction_memory_inst.mem);
 
         #20ms;
 
@@ -69,13 +69,13 @@ module turtle_cpu_top_tb;
             $display("No final data memory file provided, using default.");
         end
         $display("Saving final data memory to %s", final_data_memory_file);
-        $writememb(final_data_memory_file, uut.data_memory_inst.mem);
+        $writememb(final_data_memory_file, uut.turtle_cpu_subsystem_inst.data_memory_inst.mem);
         
         if (!$value$plusargs("final_register_file=%s", final_register_file)) begin
             $display("No final register file provided, using default.");
         end
         $display("Saving final register file to %s", final_register_file);
-        $writememb(final_register_file, uut.register_file_inst.mem);
+        $writememb(final_register_file, uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_file_inst.mem);
 
         $finish;
     end
@@ -92,27 +92,27 @@ module turtle_cpu_top_tb;
     always @(posedge uut.clk or edge uut.reset_n) begin
         if (uut.reset_n) begin
             // First, let's add detailed decoder signal monitoring
-            $display("cycle=%4d pc=%4d, instruction=0x%4h", cycle_count, uut.pc, uut.instruction);
+            $display("cycle=%4d pc=%4d, instruction=0x%4h", cycle_count, uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.pc, uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.instruction);
             $display("  DECODER_SIGNALS: branch_inst=%b, jump_branch_sel=%b, uncond_branch=%b, op=%s", 
-                uut.decoder_inst.branch_instruction,
-                uut.jump_branch_select,
-                uut.unconditional_branch,
-                uut.decoder_inst.op.name()
+                uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.decoder_inst.branch_instruction,
+                uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.jump_branch_select,
+                uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.unconditional_branch,
+                uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.decoder_inst.op.name()
             );
             
             // Show the actual instruction classification
-            if (uut.decoder_inst.branch_instruction) begin
+            if (uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.decoder_inst.branch_instruction) begin
                 $display("  BRANCH_INSTRUCTION: cond=%s, addr_imm=0x%03h", 
-                    uut.branch_condition.name(), uut.address_immediate);
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.branch_condition.name(), uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.address_immediate);
             end else begin
                 string op_name;
                 string func_name;
 
-                op_name = uut.decoder_inst.op.name();
-                if (uut.decoder_inst.op == OPCODE_REG_MEMORY) begin
-                    func_name = uut.decoder_inst.reg_mem_func.name();
-                end else if (uut.decoder_inst.alu_output_enable === 1'b1) begin
-                    func_name = uut.decoder_inst.alu_function.name();
+                op_name = uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.decoder_inst.op.name();
+                if (uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.decoder_inst.op == OPCODE_REG_MEMORY) begin
+                    func_name = uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.decoder_inst.reg_mem_func.name();
+                end else if (uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.decoder_inst.alu_output_enable === 1'b1) begin
+                    func_name = uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.decoder_inst.alu_function.name();
                 end else begin
                     func_name = "N/A";
                 end
@@ -120,65 +120,65 @@ module turtle_cpu_top_tb;
                 $display("  NON_BRANCH: op=%s, func=%s", op_name, func_name);
             end
             
-            $display("  STATE: acc=0x%02h, gpr=%p", uut.acc_out, uut.register_file_inst.gpr);
+            $display("  STATE: acc=0x%02h, gpr=%p", uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.acc_out, uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_file_inst.gpr);
             
             // Monitor ALU flags and status register updates
-            if (uut.decoder_inst.status_write_enable) begin
+            if (uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.decoder_inst.status_write_enable) begin
                 $display("  STATUS_UPDATE: alu_zero=%b, alu_positive=%b, alu_carry=%b, alu_overflow=%b, status_we=%b",
-                    uut.alu_inst.zero_flag,
-                    uut.alu_inst.positive_flag,
-                    uut.alu_inst.carry_flag,
-                    uut.alu_inst.signed_overflow,
-                    uut.decoder_inst.status_write_enable
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.alu_inst.zero_flag,
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.alu_inst.positive_flag,
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.alu_inst.carry_flag,
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.alu_inst.signed_overflow,
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.decoder_inst.status_write_enable
                 );
                 $display("  STATUS_DETAIL: old_status=0x%02h, new_status=0x%02h, reg_data_bus=0x%02h",
-                    uut.register_file_inst.mem[15], // Previous STATUS value
-                    {4'b0, uut.alu_inst.signed_overflow, uut.alu_inst.carry_flag, uut.alu_inst.positive_flag, uut.alu_inst.zero_flag},
-                    uut.register_data_bus
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_file_inst.mem[15], // Previous STATUS value
+                    {4'b0, uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.alu_inst.signed_overflow, uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.alu_inst.carry_flag, uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.alu_inst.positive_flag, uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.alu_inst.zero_flag},
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus
                 );
             end
             
             // Enhanced monitoring for branch instructions - use the correct branch detection
-            if (uut.decoder_inst.branch_instruction) begin
+            if (uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.decoder_inst.branch_instruction) begin
                 $display("  BRANCH_DEBUG: cond=%s, status=0x%02h, addr_imm=0x%03h, pc_rel=%b",
-                    uut.branch_condition.name(),
-                    uut.register_data_bus,
-                    uut.address_immediate,
-                    uut.pc_relative
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.branch_condition.name(),
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus,
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.address_immediate,
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.pc_relative
                 );
                 $display("  BRANCH_CALC: target_offset=0x%03h, branch_addr=0x%03h, branch_taken=%b",
-                    uut.program_counter_inst.target_offset,
-                    uut.program_counter_inst.branch_addr,
-                    uut.program_counter_inst.branch_taken
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.program_counter_inst.target_offset,
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.program_counter_inst.branch_addr,
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.program_counter_inst.branch_taken
                 );
                 $display("  PC_LOGIC: next_pc=0x%03h, current_pc=0x%03h",
-                    uut.program_counter_inst.next_pc,
-                    uut.pc
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.program_counter_inst.next_pc,
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.pc
                 );
                 
                 // Detailed branch condition evaluation
                 $display("  BRANCH_EVAL: zero_flag=%b, pos_flag=%b, carry_flag=%b, overflow_flag=%b",
-                    uut.register_data_bus[0], // ZERO_FLAG 
-                    uut.register_data_bus[1], // POSITIVE_FLAG
-                    uut.register_data_bus[2], // CARRY_FLAG
-                    uut.register_data_bus[3]  // SIGNED_OVERFLOW_FLAG
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[0], // ZERO_FLAG 
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[1], // POSITIVE_FLAG
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[2], // CARRY_FLAG
+                    uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[3]  // SIGNED_OVERFLOW_FLAG
                 );
                 
                 // Show how branch condition is being evaluated
-                case (uut.branch_condition)
+                case (uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.branch_condition)
                     COND_ZERO: $display("  BZ_EVAL: zero_flag=%b, should_branch=%b", 
-                        uut.register_data_bus[0], uut.register_data_bus[0] == 1'b1);
+                        uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[0], uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[0] == 1'b1);
                     COND_NOT_ZERO: $display("  BNZ_EVAL: zero_flag=%b, should_branch=%b", 
-                        uut.register_data_bus[0], uut.register_data_bus[0] == 1'b0);
+                        uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[0], uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[0] == 1'b0);
                     COND_POSITIVE: $display("  BP_EVAL: pos_flag=%b, should_branch=%b", 
-                        uut.register_data_bus[1], uut.register_data_bus[1] == 1'b1);
+                        uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[1], uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[1] == 1'b1);
                     COND_NEGATIVE: $display("  BN_EVAL: pos_flag=%b, should_branch=%b", 
-                        uut.register_data_bus[1], uut.register_data_bus[1] == 1'b0);
+                        uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[1], uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[1] == 1'b0);
                     COND_CARRY_SET: $display("  BCS_EVAL: carry_flag=%b, should_branch=%b", 
-                        uut.register_data_bus[2], uut.register_data_bus[2] == 1'b1);
+                        uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[2], uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[2] == 1'b1);
                     COND_CARRY_CLEARED: $display("  BCC_EVAL: carry_flag=%b, should_branch=%b", 
-                        uut.register_data_bus[2], uut.register_data_bus[2] == 1'b0);
-                    default: $display("  UNKNOWN_BRANCH_CONDITION: %s", uut.branch_condition.name());
+                        uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[2], uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.register_data_bus[2] == 1'b0);
+                    default: $display("  UNKNOWN_BRANCH_CONDITION: %s", uut.turtle_cpu_subsystem_inst.turtle_cpu_core_inst.branch_condition.name());
                 endcase
             end
             
