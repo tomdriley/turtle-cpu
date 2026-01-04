@@ -37,7 +37,12 @@ module turtle_cpu_core#(
     output logic [DATA_W-1:0] write_data,
     output logic data_memory_write_enable,
     output logic data_memory_output_enable,
-    input logic [DATA_W-1:0] read_data
+    input logic [DATA_W-1:0] read_data,
+
+    // Register File debug memory connections (for simulation/probing)
+    input logic debug_enable,
+    input logic [3:0] reg_debug_addr,
+    output logic [DATA_W-1:0] reg_debug_rdata
 );
 
     // Shared Bus connections (multi-driver tri-state buses)
@@ -97,7 +102,8 @@ module turtle_cpu_core#(
         .status_register(register_data_bus),
         .branch_condition(branch_condition),
         .pc_relative(pc_relative),
-        .pc(pc)
+        .pc(pc),
+        .debug_enable(debug_enable)
     );
 
     decoder #(
@@ -150,7 +156,10 @@ module turtle_cpu_core#(
         .carry_flag(carry_flag),
         .overflow_flag(overflow_flag),
         .dmar(dmar),
-        .imar(imar)
+        .imar(imar),
+        .debug_enable(debug_enable),
+        .debug_addr(reg_debug_addr),
+        .debug_rdata(reg_debug_rdata)
     );
 
     alu #(

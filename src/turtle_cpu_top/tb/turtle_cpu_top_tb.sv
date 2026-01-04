@@ -43,9 +43,9 @@ module turtle_cpu_top_tb;
         string turtle_cpu_top_dir = {tb_dir, "/.."};
 
         // Defaults use absolute paths so xsim can find the files regardless of run directory.
-        string initial_instruction_memory_file = {turtle_cpu_top_dir, "/initial_instruction_memory.txt"};
-        string final_data_memory_file = {turtle_cpu_top_dir, "/final_data_memory.txt"};
-        string final_register_file = {turtle_cpu_top_dir, "/final_register_file.txt"};
+        string initial_instruction_memory_file = {turtle_cpu_top_dir, "/initial_instruction_memory.mem"};
+        string final_data_memory_file = {turtle_cpu_top_dir, "/final_data_memory.mem"};
+        string final_register_file = {turtle_cpu_top_dir, "/final_register_file.mem"};
 
         reset_btn = 1;
         manual_clk_sw = 0;
@@ -80,6 +80,7 @@ module turtle_cpu_top_tb;
         $finish;
     end
 
+    /* verilator lint_off SYNCASYNCNET */
     always @(edge uut.reset_n) begin
         if (uut.reset_n) begin
             $display("Reset deasserted!");
@@ -88,6 +89,7 @@ module turtle_cpu_top_tb;
             $display("Reset asserted!");
         end
     end
+    /* verilator lint_on SYNCASYNCNET */
 
     always @(posedge uut.clk or edge uut.reset_n) begin
         if (uut.reset_n) begin

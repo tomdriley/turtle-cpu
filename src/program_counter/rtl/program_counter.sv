@@ -26,7 +26,8 @@ module program_counter #(
     input logic [DATA_W-1:0] status_register, // Status register containing flags
     input branch_condition_e branch_condition, // Branch condition to evaluate
     input logic pc_relative, // Flag for PC-relative addressing
-    output logic [I_ADDR_W-1:0] pc // Program Counter output
+    output logic [I_ADDR_W-1:0] pc, // Program Counter output
+    input logic debug_enable
 );
     logic [I_ADDR_W-1:0] next_pc; // Next program counter value
     logic [I_ADDR_W-1:0] branch_addr; // Address to branch to if condition is met
@@ -43,10 +44,10 @@ module program_counter #(
     assign next_pc = branch_taken ? branch_addr : (pc + INST_W_BYTES[I_ADDR_W-1:0]); // Increment PC by instruction width if not branching
     assign status_register_unused = status_register[DATA_W-1:4]; // Unused bits in status register
     
-    always_ff @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk) begin
         if (!rst_n) begin
             pc <= '0; // Reset program counter to zero
-        end else begin
+        end else if (!debug_enable) begin
             pc <= next_pc; // Update program counter to next value
         end
     end

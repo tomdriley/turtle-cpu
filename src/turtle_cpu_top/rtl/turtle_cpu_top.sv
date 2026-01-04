@@ -54,7 +54,17 @@ module turtle_cpu_top#(
         .D_MEMORY_DEPTH(D_MEMORY_DEPTH)
     ) turtle_cpu_subsystem_inst (
         .clk(clk),
-        .reset_n(reset_n)
+        .reset_n(reset_n),
+        // Debug connections tied off for top-level
+        .debug_enable(1'b0),
+        .reg_debug_addr(4'b0),
+        .dmem_debug_addr({D_ADDR_W{1'b0}}),
+        .imem_debug_addr({I_ADDR_W{1'b0}}),
+        /* verilator lint_off PINCONNECTEMPTY */
+        .reg_debug_rdata(),
+        .dmem_debug_rdata(),
+        .imem_debug_rdata()
+        /* verilator lint_on PINCONNECTEMPTY */
     );
 
 endmodule: turtle_cpu_top

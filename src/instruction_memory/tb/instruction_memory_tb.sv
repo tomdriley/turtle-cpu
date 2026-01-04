@@ -25,6 +25,7 @@ module instruction_memory_tb;
     instruction_memory #(
         .INST_W(INST_W),
         .I_ADDR_W(I_ADDR_W),
+        .INIT_FILE("count_255.mem"),
         .I_MEMORY_DEPTH(I_MEMORY_DEPTH)
     ) uut (
         .addr(addr),
@@ -33,8 +34,6 @@ module instruction_memory_tb;
 
     initial begin: main_test
         $monitor("addr=%4d, instruction=0x%4h (0b%16b)", addr, instruction, instruction);
-        $readmemb("count_255.txt", uut.mem);
-
         $display("Wrote count 1 to 255 to memory");
 
         for(bit[I_ADDR_W-1:0] i = 0; i < 256; i += 2) begin: addr_loop

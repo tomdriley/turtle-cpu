@@ -41,11 +41,14 @@ module register_file #(
     
     // Special register outputs for memory address computation
     output logic [D_ADDR_WIDTH-1:0] dmar,
-    output logic [I_ADDR_WIDTH-1:0] imar
-);
-    /* verilator lint_off UNUSEDSIGNAL */
-    logic [DATA_W-1:0] mem [15:0]; // Memory view of registers (for debugging)
-    /* verilator lint_on UNUSEDSIGNAL */
+    output logic [I_ADDR_WIDTH-1:0] imar,
+
+    // Debug memory connections (for simulation/probing)
+    input logic debug_enable,
+    input logic [3:0] debug_addr,
+    output logic [DATA_W-1:0] debug_rdata
+    );
+    logic [DATA_W-1:0] mem [15:0];
 
     // Internal register storage
     logic [DATA_W-1:0] gpr [NUM_GPR-1:0];           // R0-R7
@@ -96,7 +99,7 @@ module register_file #(
     );
 
     // Register write logic
-    always_ff @(posedge clk or negedge reset_n) begin
+    always_ff @(posedge clk) begin
         if (!reset_n) begin
             // Reset all registers to zero
             for (int i = 0; i < NUM_GPR; i++) begin
@@ -111,12 +114,12 @@ module register_file #(
             status <= 8'b00000011;
         end else begin
             // Accumulator update (highest priority)
-            if (acc_write_enable) begin
+            if (acc_write_enable && !debug_enable) begin
                 acc <= internal_acc_in;
             end
             
             // PUT operation: Write ACC to register specified by reg_addr
-            if (write_put_acc) begin
+            if (write_put_acc && !debug_enable) begin
                 case (reg_addr)
                     REG_R0, REG_R1, REG_R2, REG_R3,
                     REG_R4, REG_R5, REG_R6, REG_R7: begin
@@ -141,7 +144,7 @@ module register_file #(
             end
             
             // Status register update from ALU flags
-            if (status_write_enable) begin
+            if (status_write_enable && !debug_enable) begin
                 status[ZERO_FLAG] <= zero_flag;     // Z/NZ flag
                 status[POSITIVE_FLAG] <= positive_flag; // P/N flag (now directly positive)
                 status[CARRY_FLAG] <= carry_flag;    // CS/CC flag
@@ -152,6 +155,10 @@ module register_file #(
     end
 
     always_comb begin
+        for (int i = 0; i < 16; i++) begin
+            mem[i] = '0; // Default to zero
+        end
+
         // Memory view for debugging purposes
         mem[REG_R0] = gpr[0];
         mem[REG_R1] = gpr[1];
@@ -168,6 +175,9 @@ module register_file #(
         mem[REG_IOFF] = ioff;
         mem[REG_STATUS] = status;
     end
+
+    // Debug memory read logic
+    assign debug_rdata = mem[debug_addr];
 
 endmodule: register_file
 

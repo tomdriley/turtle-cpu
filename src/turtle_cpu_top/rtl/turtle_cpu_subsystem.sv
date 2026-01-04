@@ -14,7 +14,16 @@ module turtle_cpu_subsystem#(
     parameter int D_MEMORY_DEPTH = 1 << D_ADDR_W
 ) (
     input logic clk,
-    input logic reset_n
+    input logic reset_n,
+
+    // Register and Memory debug memory connections (for simulation/probing)
+    input logic debug_enable,
+    input logic [3:0] reg_debug_addr,
+    output logic [DATA_W-1:0] reg_debug_rdata,
+    input logic [D_ADDR_W-1:0] dmem_debug_addr,
+    output logic [DATA_W-1:0] dmem_debug_rdata,
+    input logic [I_ADDR_W-1:0] imem_debug_addr,
+    output logic [INST_W-1:0] imem_debug_rdata
 );
 
     logic [I_ADDR_W-1:0] instruction_addr;
@@ -26,27 +35,37 @@ module turtle_cpu_subsystem#(
     logic data_memory_output_enable;
     logic [DATA_W-1:0] read_data;
 
+    (* keep_hierarchy = "yes" *)
     instruction_memory #(
         .I_ADDR_W(I_ADDR_W),
         .INST_W(INST_W),
         .I_MEMORY_DEPTH(I_MEMORY_DEPTH)
     ) instruction_memory_inst (
         .addr(instruction_addr),
-        .instruction(instruction)
+        .instruction(instruction),
+        .debug_enable(debug_enable),
+        .debug_addr(imem_debug_addr),
+        .debug_rdata(imem_debug_rdata)
     );
 
+    (* keep_hierarchy = "yes" *)
     data_memory #(
         .D_ADDR_W(D_ADDR_W),
         .DATA_W(DATA_W),
         .D_MEMORY_DEPTH(D_MEMORY_DEPTH)
     ) data_memory_inst (
+        .clk(clk),
         .data_addr(data_addr),
         .write_data(write_data),
         .write_enable(data_memory_write_enable),
         .output_enable(data_memory_output_enable),
-        .read_data(read_data)
+        .read_data(read_data),
+        .debug_enable(debug_enable),
+        .debug_addr(dmem_debug_addr),
+        .debug_rdata(dmem_debug_rdata)
     );
 
+    (* keep_hierarchy = "yes" *)
     turtle_cpu_core #(
         .DATA_W(DATA_W),
         .D_ADDR_W(D_ADDR_W),
@@ -63,7 +82,10 @@ module turtle_cpu_subsystem#(
         .write_data(write_data),
         .data_memory_write_enable(data_memory_write_enable),
         .data_memory_output_enable(data_memory_output_enable),
-        .read_data(read_data)
+        .read_data(read_data),
+        .debug_enable(debug_enable),
+        .reg_debug_addr(reg_debug_addr),
+        .reg_debug_rdata(reg_debug_rdata)
     );
 
 endmodule : turtle_cpu_subsystem
