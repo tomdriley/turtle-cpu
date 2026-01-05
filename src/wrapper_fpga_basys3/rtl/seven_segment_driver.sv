@@ -20,7 +20,13 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module seven_segment_driver(
+module seven_segment_driver#(
+    // Tick every (CLK / (REFRESH_RATE_HZ)) cycles for per-digit rate
+    parameter int TICK_CYCLES   = 200_000,
+    parameter real ON_FRACTION  = 0.125, // Fraction of time each digit is on 
+    localparam int ON_CYCLES    = TICK_CYCLES * ON_FRACTION,
+    localparam int CNT_W        = $clog2(TICK_CYCLES)
+)(
     input  logic       clk,
     input  logic       reset_n,
 
@@ -30,10 +36,6 @@ module seven_segment_driver(
     output logic [3:0] an          // active-low anodes
 );
 
-    // Tick every (CLK / (REFRESH_RATE_HZ)) cycles for per-digit rate
-    localparam int TICK_CYCLES = 200_000;
-    localparam int ON_CYCLES = TICK_CYCLES * 0.125; // Adjusts brightnessS
-    localparam int CNT_W       = $clog2(TICK_CYCLES);
 
     logic [CNT_W-1:0] cnt;
     logic             tick;
