@@ -13,9 +13,8 @@ module alu#(
     input   wire [DATA_W-1:0]       operand_a,
     input   wire [DATA_W-1:0]       operand_b,
     input   wire [ALU_FUNC_W-1:0]   alu_func,
-    input   wire                    output_enable,
     // Outputs
-    output  tri   [DATA_W-1:0]      alu_result,
+    output  logic [DATA_W-1:0]      alu_result,
     output  logic                   zero_flag,
     output  logic                   positive_flag,
     output  logic                   carry_flag,
@@ -59,12 +58,8 @@ module alu#(
         positive_flag = ~result[DATA_W-1]; // Positive if MSB is 0 (not negative)
     end
 
-    // Tri-state bus driver
-    tristate_driver #(.DATA_W(DATA_W)) alu_result_driver (
-        .en(output_enable),
-        .d(result),
-        .bus(alu_result)
-    );
+    // Always drive the computed result; the top-level selects it with a mux.
+    assign alu_result = result;
 endmodule: alu
 
 `endif // ALU_GATES

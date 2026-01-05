@@ -32,7 +32,6 @@ module turtle_cpu_subsystem#(
     logic [D_ADDR_W-1:0] data_addr;
     logic [DATA_W-1:0] write_data;
     logic data_memory_write_enable;
-    logic data_memory_output_enable;
     logic [DATA_W-1:0] read_data;
 
     (* keep_hierarchy = "yes" *)
@@ -58,7 +57,6 @@ module turtle_cpu_subsystem#(
         .data_addr(data_addr),
         .write_data(write_data),
         .write_enable(data_memory_write_enable),
-        .output_enable(data_memory_output_enable),
         .read_data(read_data),
         .debug_enable(debug_enable),
         .debug_addr(dmem_debug_addr),
@@ -81,7 +79,6 @@ module turtle_cpu_subsystem#(
         .data_addr(data_addr),
         .write_data(write_data),
         .data_memory_write_enable(data_memory_write_enable),
-        .data_memory_output_enable(data_memory_output_enable),
         .read_data(read_data),
         .debug_enable(debug_enable),
         .reg_debug_addr(reg_debug_addr),

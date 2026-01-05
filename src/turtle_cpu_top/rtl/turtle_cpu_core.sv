@@ -36,7 +36,6 @@ module turtle_cpu_core#(
     output logic [D_ADDR_W-1:0] data_addr,
     output logic [DATA_W-1:0] write_data,
     output logic data_memory_write_enable,
-    output logic data_memory_output_enable,
     input logic [DATA_W-1:0] read_data,
 
     // Register File debug memory connections (for simulation/probing)
@@ -45,9 +44,11 @@ module turtle_cpu_core#(
     output logic [DATA_W-1:0] reg_debug_rdata
 );
 
-    // Shared Bus connections (multi-driver tri-state buses)
-    tri [DATA_W-1:0] register_data_bus; // Data bus for register file
-    tri [DATA_W-1:0] acc_in_bus; // Input bus for accumulator
+    // FPGA-friendly shared-bus modeling:
+    // Instead of internal tri-states, expose each candidate source on its own wire
+    // and mux the bus explicitly.
+    logic [DATA_W-1:0] register_data_bus;
+    logic [DATA_W-1:0] acc_in_bus;
 
     // Register File to Program Counter connections
     wire [I_ADDR_W-1:0] imar; // Instruction Memory Address Register
@@ -71,6 +72,15 @@ module turtle_cpu_core#(
     wire read_data_output_enable; // Enable signal for output from register file to bus
     wire status_write_enable; // Enable signal for writing to status register from ALU
 
+    // Data-memory read select (core-internal; no longer needs to be exported)
+    wire data_memory_output_enable;
+
+    // Decoder immediate sources (formerly tri-stated onto buses)
+    wire [DATA_W-1:0] decoder_acc_immediate;
+    wire decoder_acc_immediate_output_enable;
+    wire [DATA_W-1:0] decoder_alu_operand_b_immediate;
+    wire decoder_alu_operand_b_immediate_output_enable;
+
     // Decoder to ALU connections
     wire alu_output_enable; // Enable signal for ALU output
     alu_func_e alu_function; // ALU function to perform
@@ -80,6 +90,12 @@ module turtle_cpu_core#(
 
     // Register File to Data Memory / ALU shared connections
     wire [DATA_W-1:0] acc_out; // Output from accumulator
+
+    // Register file read data (separate wire, muxed into register_data_bus)
+    wire [DATA_W-1:0] regfile_read_data;
+
+    // ALU result (separate wire, muxed into acc_in_bus)
+    wire [DATA_W-1:0] alu_result;
 
     // ALU to Register File connections
     wire zero_flag; // Zero flag output from ALU
@@ -114,8 +130,10 @@ module turtle_cpu_core#(
     ) decoder_inst (
         .instruction(instruction),
         .address_immediate(address_immediate),
-        .acc_immediate(acc_in_bus),
-        .alu_operand_b_immediate(register_data_bus),
+        .acc_immediate(decoder_acc_immediate),
+        .acc_immediate_output_enable(decoder_acc_immediate_output_enable),
+        .alu_operand_b_immediate(decoder_alu_operand_b_immediate),
+        .alu_operand_b_immediate_output_enable(decoder_alu_operand_b_immediate_output_enable),
         .acc_write_enable(acc_write_enable),
         .write_put_acc(write_put_acc),
         .read_get_acc(read_get_acc),
@@ -148,8 +166,7 @@ module turtle_cpu_core#(
         .read_get_to_acc(read_get_acc),
         .write_put_acc(write_put_acc),
         .reg_addr(reg_addr),
-        .read_data_output_enable(read_data_output_enable),
-        .read_data(register_data_bus),
+        .read_data(regfile_read_data),
         .status_write_enable(status_write_enable),
         .zero_flag(zero_flag),
         .positive_flag(positive_flag),
@@ -168,13 +185,44 @@ module turtle_cpu_core#(
         .operand_a(acc_out),
         .operand_b(register_data_bus),
         .alu_func(alu_function),
-        .output_enable(alu_output_enable),
-        .alu_result(acc_in_bus),
+        .alu_result(alu_result),
         .zero_flag(zero_flag),
         .positive_flag(positive_flag),
         .carry_flag(carry_flag),
         .signed_overflow(overflow_flag)
     );
+
+    // Mux the register_data_bus sources (regfile vs immediate operand-B)
+    always_comb begin
+        unique case (1'b1)
+            decoder_alu_operand_b_immediate_output_enable: register_data_bus = decoder_alu_operand_b_immediate;
+            read_data_output_enable: register_data_bus = regfile_read_data;
+            default: register_data_bus = '0;
+        endcase
+    end
+
+    // Mux the accumulator input bus sources (immediate vs memory vs ALU)
+    logic mem_read_en;
+    assign mem_read_en = data_memory_output_enable && !data_memory_write_enable;
+
+    always_comb begin
+        unique case (1'b1)
+            decoder_acc_immediate_output_enable: acc_in_bus = decoder_acc_immediate;
+            mem_read_en: acc_in_bus = read_data;
+            alu_output_enable: acc_in_bus = alu_result;
+            default: acc_in_bus = '0;
+        endcase
+    end
+
+`ifndef SYNTHESIS
+    // Catch accidental multi-enables that would have been bus contention in TTL.
+    always_comb begin
+        assert ($onehot0({decoder_alu_operand_b_immediate_output_enable, read_data_output_enable}))
+            else $error("register_data_bus contention: multiple sources enabled");
+        assert ($onehot0({decoder_acc_immediate_output_enable, mem_read_en, alu_output_enable}))
+            else $error("acc_in_bus contention: multiple sources enabled");
+    end
+`endif
 
     // Instruction Memory interface connections
     assign instruction_addr = pc;
@@ -182,7 +230,7 @@ module turtle_cpu_core#(
     // Data Memory interface connections
     assign data_addr = dmar;
     assign write_data = acc_out;
-    assign acc_in_bus = read_data;
+
 
 endmodule: turtle_cpu_core
 

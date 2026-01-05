@@ -29,8 +29,7 @@ module register_file #(
 
     // General purpose register read port
     input logic [REG_ADDR_WIDTH-1:0] reg_addr,
-    input logic read_data_output_enable,                       // Enable for ALU operand b bus
-    output tri   [DATA_W-1:0] read_data,            // Tri-state output for read data to ALU operand b bus
+    output logic [DATA_W-1:0] read_data,            // Read data value (always driven)
 
     // Status register inputs (from ALU)
     input logic status_write_enable,
@@ -91,12 +90,8 @@ module register_file #(
     // This is a mux (not a tri-state) to avoid multiple drivers on an internal variable.
     assign internal_acc_in = read_get_to_acc ? reg_read_data : acc_in;
 
-    // Tri-state driver for read_data bus
-    tristate_driver #(.DATA_W(DATA_W)) read_data_driver (
-        .en(read_data_output_enable),
-        .d(reg_read_data),
-        .bus(read_data)
-    );
+    // Always drive the read value; the top-level decides when to consume it.
+    assign read_data = reg_read_data;
 
     // Register write logic
     always_ff @(posedge clk) begin

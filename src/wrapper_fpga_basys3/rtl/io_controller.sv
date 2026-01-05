@@ -81,9 +81,9 @@ module io_controller#(
     logic [15:0] data_out;
     always_comb begin
         unique case (mem_sel)
-            2'b10: data_out = {4'b0, imem_debug_rdata}; // Instruction Memory
-            2'b11: data_out = {4'b0, dmem_debug_rdata}; // Data Memory
-            default: data_out = {4'b0, reg_debug_rdata}; // Register Memory
+            2'b10: data_out = imem_debug_rdata; // Instruction Memory
+            2'b11: data_out = {8'b0, dmem_debug_rdata}; // Data Memory
+            default: data_out = {8'b0, reg_debug_rdata}; // Register Memory
         endcase
     end
     // Convert data_out to hex for 7-seg display

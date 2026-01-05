@@ -14,8 +14,7 @@ module data_memory #(
     input logic [D_ADDR_W-1:0] data_addr,
     input logic [DATA_W-1:0] write_data,
     input logic write_enable,
-    input logic output_enable,
-    output tri   [DATA_W-1:0] read_data,
+    output logic [DATA_W-1:0] read_data,
 
     // Debug memory connections (for simulation/probing)
     input logic debug_enable,
@@ -25,16 +24,12 @@ module data_memory #(
 
     logic [DATA_W-1:0] mem [D_MEMORY_DEPTH-1:0]; // Distributed RAM
     logic [D_ADDR_W-1:0] effective_addr;
-    logic [DATA_W-1:0] read_data_val;
-    logic read_data_en;
 
     assign effective_addr = debug_enable ? debug_addr : data_addr;
     assign debug_rdata = mem[effective_addr];
 
-    assign read_data_en = output_enable && !write_enable;
-
-    // Read datapath (value is always computed; tri-state driver controls visibility on bus)
-    assign read_data_val = mem[effective_addr];
+    // Always drive the read value; the top-level decides when to consume it.
+    assign read_data = mem[effective_addr];
 
     // Write operation
     always_ff @(posedge clk) begin
@@ -42,12 +37,6 @@ module data_memory #(
             mem[data_addr] <= write_data;
         end
     end
-
-    tristate_driver #(.DATA_W(DATA_W)) read_data_driver (
-        .en(read_data_en),
-        .d(read_data_val),
-        .bus(read_data)
-    );
 
 endmodule: data_memory
 

@@ -20,10 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module seven_segment_driver #(
-    parameter int CLK_FREQ_HZ     = 100_000_000,
-    parameter int REFRESH_RATE_HZ  = 250 // per-digit scan rate
-)(
+module seven_segment_driver(
     input  logic       clk,
     input  logic       reset_n,
 
@@ -34,16 +31,19 @@ module seven_segment_driver #(
 );
 
     // Tick every (CLK / (REFRESH_RATE_HZ)) cycles for per-digit rate
-    localparam int TICK_CYCLES = CLK_FREQ_HZ / REFRESH_RATE_HZ;
+    localparam int TICK_CYCLES = 200_000;
+    localparam int ON_CYCLES = TICK_CYCLES * 0.125; // Adjusts brightnessS
     localparam int CNT_W       = $clog2(TICK_CYCLES);
 
     logic [CNT_W-1:0] cnt;
     logic             tick;
+    logic             digit_off_tick;
 
     always_ff @(posedge clk) begin
         if (!reset_n) begin
             cnt  <= '0;
             tick <= 1'b0;
+            digit_off_tick <= 1'b0;
         end else begin
             if (cnt == TICK_CYCLES-1) begin
                 cnt  <= '0;
@@ -52,15 +52,20 @@ module seven_segment_driver #(
                 cnt  <= cnt + 1'b1;
                 tick <= 1'b0;
             end
+
+            if (cnt == ON_CYCLES) begin
+                digit_off_tick <= 1;
+            end
+            else begin
+                digit_off_tick <= 0;
+            end
         end
     end
 
-    logic [1:0] digit_idx;    // 0..3
-    logic [3:0] cur_nibble;
-
-    // Pick the nibble for the *current* digit index
-    assign cur_nibble = dig[digit_idx];
-
+    logic [1:0] digit_idx, next_digit_idx;
+    logic [3:0] next_an;
+    logic [6:0] next_seg;
+    
     // 7-seg encode (common anode, active-low segments)
     function automatic logic [6:0] enc7(input logic [3:0] v);
         unique case (v)
@@ -84,6 +89,19 @@ module seven_segment_driver #(
         endcase
     endfunction
 
+    assign next_digit_idx = digit_idx + 1;
+
+    always_comb begin
+        unique case (next_digit_idx)
+            2'd0: next_an <= 4'b1110;
+            2'd1: next_an <= 4'b1101;
+            2'd2: next_an <= 4'b1011;
+            2'd3: next_an <= 4'b0111;
+        endcase
+    end
+
+    assign next_seg = enc7(dig[next_digit_idx]);
+    
     // Drive an + seg coherently on the scan tick
     always_ff @(posedge clk) begin
         if (!reset_n) begin
@@ -92,18 +110,12 @@ module seven_segment_driver #(
             seg       <= 7'b1111111;    // blank
         end else if (tick) begin
             digit_idx <= digit_idx + 2'd1;
-
-            // anodes from *next/current* index (match seg update)
-            unique case (digit_idx + 2'd1)
-                2'd0: an <= 4'b1110;
-                2'd1: an <= 4'b1101;
-                2'd2: an <= 4'b1011;
-                2'd3: an <= 4'b0111;
-            endcase
-
-            seg <= enc7(dig[digit_idx + 2'd1]);
+            an        <= next_an;
+            seg       <= next_seg;
+        end
+        else if (digit_off_tick) begin
+            an <= 4'b1111;
         end
     end
 
 endmodule: seven_segment_driver
-
