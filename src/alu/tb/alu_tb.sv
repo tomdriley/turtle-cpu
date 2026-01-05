@@ -5,12 +5,11 @@
 // author: Tom Riley
 // date: 2025-07-10
 
-/* verilator lint_off IMPORTSTAR */
-import alu_pkg::*;
-/* verilator lint_on IMPORTSTAR */
-
 // Testbench for the ALU module
 module alu_tb;
+    /* verilator lint_off IMPORTSTAR */
+    import alu_pkg::*;
+    /* verilator lint_on IMPORTSTAR */
     initial begin
         $dumpfile("waves.vcd");
         $dumpvars(0, alu_tb);

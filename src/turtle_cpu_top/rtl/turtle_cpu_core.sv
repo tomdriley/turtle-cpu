@@ -5,13 +5,6 @@
 // author: Tom Riley
 // date: 2026-01-03
 
-/* verilator lint_off IMPORTSTAR */
-import program_counter_pkg::*;
-import alu_pkg::*;
-import decoder_pkg::*;
-import register_file_pkg::*;
-/* verilator lint_on IMPORTSTAR */
-
 // This module is the core of the Turtle CPU.
 module turtle_cpu_core#(
     // Architecture parameters
@@ -43,6 +36,13 @@ module turtle_cpu_core#(
     input logic [3:0] reg_debug_addr,
     output logic [DATA_W-1:0] reg_debug_rdata
 );
+
+    /* verilator lint_off IMPORTSTAR */
+    import program_counter_pkg::*;
+    import alu_pkg::*;
+    import decoder_pkg::*;
+    import register_file_pkg::*;
+    /* verilator lint_on IMPORTSTAR */
 
     // FPGA-friendly shared-bus modeling:
     // Instead of internal tri-states, expose each candidate source on its own wire

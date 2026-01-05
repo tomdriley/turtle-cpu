@@ -39,13 +39,13 @@ module turtle_cpu_top_tb;
 
     // Test sequence
     initial begin
-        string tb_dir = dir_of(`__FILE__);
-        string turtle_cpu_top_dir = {tb_dir, "/.."};
+        automatic string tb_dir = dir_of(`__FILE__);
+        automatic string turtle_cpu_top_dir = {tb_dir, "/.."};
 
         // Defaults use absolute paths so xsim can find the files regardless of run directory.
-        string initial_instruction_memory_file = {turtle_cpu_top_dir, "/initial_instruction_memory.mem"};
-        string final_data_memory_file = {turtle_cpu_top_dir, "/final_data_memory.mem"};
-        string final_register_file = {turtle_cpu_top_dir, "/final_register_file.mem"};
+        automatic string initial_instruction_memory_file = {turtle_cpu_top_dir, "/initial_instruction_memory.mem"};
+        automatic string final_data_memory_file = {turtle_cpu_top_dir, "/final_data_memory.mem"};
+        automatic string final_register_file = {turtle_cpu_top_dir, "/final_register_file.mem"};
 
         reset_btn = 1;
         manual_clk_sw = 0;

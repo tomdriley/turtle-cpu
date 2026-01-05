@@ -5,10 +5,6 @@
 // author: Tom Riley
 // date: 2025-07-03
 
-/* verilator lint_off IMPORTSTAR */
-import register_file_pkg::*;
-/* verilator lint_on IMPORTSTAR */
-
 module register_file #(
     parameter int DATA_W = 8,
     parameter int I_ADDR_WIDTH = 12,
@@ -47,6 +43,11 @@ module register_file #(
     input logic [3:0] debug_addr,
     output logic [DATA_W-1:0] debug_rdata
     );
+
+    /* verilator lint_off IMPORTSTAR */
+    import register_file_pkg::*;
+    /* verilator lint_on IMPORTSTAR */
+
     logic [DATA_W-1:0] mem [15:0];
 
     // Internal register storage

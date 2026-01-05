@@ -5,13 +5,6 @@
 // author: Tom Riley
 // date: 2025-07-01
 
-/* verilator lint_off IMPORTSTAR */
-import program_counter_pkg::*;
-import alu_pkg::*;
-import decoder_pkg::*;
-import register_file_pkg::*;
-/* verilator lint_on IMPORTSTAR */
-
 // This module is the top-level module for the Turtle CPU.
 module turtle_cpu_top#(
     parameter int CLK_PERIOD_NS = 1000,
@@ -30,6 +23,13 @@ module turtle_cpu_top#(
     input logic manual_clk_sw,
     input logic pulse_clk_btn
 );
+    /* verilator lint_off IMPORTSTAR */
+    import program_counter_pkg::*;
+    import alu_pkg::*;
+    import decoder_pkg::*;
+    import register_file_pkg::*;
+    /* verilator lint_on IMPORTSTAR */
+
     wire clk;
     wire reset_n;
 

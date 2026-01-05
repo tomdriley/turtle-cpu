@@ -5,13 +5,13 @@
 // author: Tom Riley
 // date: 2025-07-10
 
-/* verilator lint_off IMPORTSTAR */
-import program_counter_pkg::*;
-import register_file_pkg::*;
-/* verilator lint_on IMPORTSTAR */
-
 // Testbench for the program_counter module
 module program_counter_tb;
+    /* verilator lint_off IMPORTSTAR */
+    import program_counter_pkg::*;
+    import register_file_pkg::*;
+    /* verilator lint_on IMPORTSTAR */
+
     initial begin
         $dumpfile("waves.vcd");
         $dumpvars(0, program_counter_tb);

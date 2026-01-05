@@ -5,6 +5,8 @@
 // author: Tom Riley
 // date: 2025-07-08
 
+module decoder
+
 /* verilator lint_off IMPORTSTAR */
 import alu_pkg::*;
 import program_counter_pkg::*;
@@ -12,12 +14,13 @@ import decoder_pkg::*;
 import register_file_pkg::*;
 /* verilator lint_on IMPORTSTAR */
 
-module decoder#(
+#(
     parameter int INST_W = 16,
     parameter int DATA_W = 8,
     parameter int I_ADDR_W = 12,
     parameter int REG_ADDR_WIDTH = 4
-) (
+)
+(
     // Inputs
     input wire [INST_W-1:0] instruction,
     // Data/address outputs
