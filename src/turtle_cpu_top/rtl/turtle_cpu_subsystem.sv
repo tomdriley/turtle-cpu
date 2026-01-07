@@ -23,7 +23,9 @@ module turtle_cpu_subsystem#(
     input logic [D_ADDR_W-1:0] dmem_debug_addr,
     output logic [DATA_W-1:0] dmem_debug_rdata,
     input logic [I_ADDR_W-1:0] imem_debug_addr,
-    output logic [INST_W-1:0] imem_debug_rdata
+    output logic [INST_W-1:0] imem_debug_rdata,
+    
+    output logic [I_ADDR_W-1:0] pc // Output PC for debugging
 );
 
     logic [I_ADDR_W-1:0] instruction_addr;
@@ -33,6 +35,8 @@ module turtle_cpu_subsystem#(
     logic [DATA_W-1:0] write_data;
     logic data_memory_write_enable;
     logic [DATA_W-1:0] read_data;
+    
+    assign pc = instruction_addr;
 
     (* keep_hierarchy = "yes" *)
     instruction_memory #(

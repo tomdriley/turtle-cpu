@@ -44,7 +44,8 @@ module io_controller#(
     output logic [D_ADDR_W-1:0] dmem_debug_addr,
     input logic [DATA_W-1:0] dmem_debug_rdata,
     output logic [I_ADDR_W-1:0] imem_debug_addr,
-    input logic [INST_W-1:0] imem_debug_rdata
+    input logic [INST_W-1:0] imem_debug_rdata,
+    input logic [I_ADDR_W-1:0] pc
 );
     
     logic [3:0] dig[3:0]; // 4 hex digits to display
@@ -80,11 +81,16 @@ module io_controller#(
     assign mem_sel = sw[14:13];
     logic [15:0] data_out;
     always_comb begin
-        unique case (mem_sel)
-            2'b10: data_out = imem_debug_rdata; // Instruction Memory
-            2'b11: data_out = {8'b0, dmem_debug_rdata}; // Data Memory
-            default: data_out = {8'b0, reg_debug_rdata}; // Register Memory
-        endcase
+        if (debug_enable) begin
+            unique case (mem_sel)
+                2'b10: data_out = imem_debug_rdata; // Instruction Memory
+                2'b11: data_out = {8'b0, dmem_debug_rdata}; // Data Memory
+                default: data_out = {8'b0, reg_debug_rdata}; // Register Memory
+            endcase
+        end
+        else begin
+            data_out = {4'b0, pc};
+        end
     end
     // Convert data_out to hex for 7-seg display
     for (genvar i = 0; i < 4; i++) begin

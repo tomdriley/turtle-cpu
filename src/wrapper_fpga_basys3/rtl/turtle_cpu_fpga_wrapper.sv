@@ -51,6 +51,8 @@ module turtle_cpu_fpga_wrapper#(
     logic [I_ADDR_W-1:0] imem_debug_addr;
     logic [INST_W-1:0] imem_debug_rdata;
     
+    logic [I_ADDR_W-1:0] pc;
+    
     clk_rst_pll_sync clk_rst_pll_sync_inst(.*);
     
     io_controller io_controller_inst(.*);
