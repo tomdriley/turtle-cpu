@@ -10,6 +10,7 @@ module turtle_cpu_fpga_wrapper_tb;
     logic [15:0] led;
     logic [6:0] seg;
     logic [3:0] an;
+    logic RsTx, RsRx;
 
     // Instantiate the DUT
     turtle_cpu_fpga_wrapper uut (.*);

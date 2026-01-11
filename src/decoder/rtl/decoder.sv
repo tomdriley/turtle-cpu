@@ -7,11 +7,11 @@
 
 module decoder
 
-/* verilator lint_off IMPORTSTAR */
-import alu_pkg::*;
-import program_counter_pkg::*;
-import decoder_pkg::*;
-import register_file_pkg::*;
+  /* verilator lint_off IMPORTSTAR */
+  import alu_pkg::*;
+  import program_counter_pkg::*;
+  import decoder_pkg::*;
+  import register_file_pkg::*;
 /* verilator lint_on IMPORTSTAR */
 
 #(
@@ -19,66 +19,69 @@ import register_file_pkg::*;
     parameter int DATA_W = 8,
     parameter int I_ADDR_W = 12,
     parameter int REG_ADDR_WIDTH = 4
-)
-(
+) (
     // Inputs
-    input wire [INST_W-1:0] instruction,
+    input  wire                    [        INST_W-1:0] instruction,
     // Data/address outputs
-    output logic [I_ADDR_W-1:0] address_immediate,
-    output logic [DATA_W-1:0] acc_immediate,
-    output logic              acc_immediate_output_enable,
-    output logic [DATA_W-1:0] alu_operand_b_immediate,
-    output logic              alu_operand_b_immediate_output_enable,
+    output logic                   [      I_ADDR_W-1:0] address_immediate,
+    output logic                   [        DATA_W-1:0] acc_immediate,
+    output logic                                        acc_immediate_output_enable,
+    output logic                   [        DATA_W-1:0] alu_operand_b_immediate,
+    output logic                                        alu_operand_b_immediate_output_enable,
     // Outputs to register file
-    output wire acc_write_enable,
-    output wire write_put_acc,
-    output wire read_get_acc,
-    output wire [REG_ADDR_WIDTH-1:0] reg_addr,
-    output wire read_data_output_enable,
-    output wire status_write_enable,
+    output wire                                         acc_write_enable,
+    output wire                                         write_put_acc,
+    output wire                                         read_get_acc,
+    output wire                    [REG_ADDR_WIDTH-1:0] reg_addr,
+    output wire                                         read_data_output_enable,
+    output wire                                         status_write_enable,
     // Outputs to data memory
-    output wire data_memory_write_enable,
-    output wire data_memory_output_enable,
+    output wire                                         data_memory_write_enable,
+    output wire                                         data_memory_output_enable,
     // Outputs to program counter
-    output wire jump_branch_select,
-    output wire immediate_address_select,
-    output wire unconditional_branch,
-    output wire branch_condition_e branch_condition,
-    output wire pc_relative,
+    output wire                                         jump_branch_select,
+    output wire                                         immediate_address_select,
+    output wire                                         unconditional_branch,
+    output wire branch_condition_e                      branch_condition,
+    output wire                                         pc_relative,
     // Outputs to ALU
-    output wire alu_output_enable,
-    output alu_func_e alu_function
+    output wire                                         alu_output_enable,
+    output alu_func_e                                   alu_function
 );
-    logic branch_instruction;
-    opcode_e op;
-    reg_mem_func_e reg_mem_func;
-    logic [3:0] function_bits;
-    logic [DATA_W-1:0] data_immediate;
-    logic operand_b_immediate_output_enable;
+  logic branch_instruction;
+  opcode_e op;
+  reg_mem_func_e reg_mem_func;
+  logic [3:0] function_bits;
+  logic [DATA_W-1:0] data_immediate;
+  logic operand_b_immediate_output_enable;
 
-    // Instruction field extraction
-    assign branch_instruction = instruction[BRANCH_INSTRUCTION_OFFSET];
-    assign branch_condition = branch_condition_e'(instruction[BRANCH_CONDITION_MSB:BRANCH_CONDITION_LSB]);
-    assign op = opcode_e'(instruction[OP_MSB:OP_LSB]);
-    assign function_bits = instruction[FUNCTION_MSB:FUNCTION_LSB];
-    assign alu_function = alu_func_e'(function_bits);
-    assign reg_mem_func = reg_mem_func_e'(function_bits);
-    assign address_immediate = instruction[ADDRESS_IMMEDIATE_MSB:ADDRESS_IMMEDIATE_LSB];
-    assign data_immediate = instruction[DATA_IMMEDIATE_MSB:DATA_IMMEDIATE_LSB];
-    assign reg_addr = branch_instruction ? REG_STATUS : instruction[REG_ADDR_MSB:REG_ADDR_LSB]; // Use STATUS register for branch instructions
+  // Instruction field extraction
+  assign branch_instruction = instruction[BRANCH_INSTRUCTION_OFFSET];
+  assign branch_condition = branch_condition_e'(
+    instruction[BRANCH_CONDITION_MSB:BRANCH_CONDITION_LSB]);
+  assign op = opcode_e'(instruction[OP_MSB:OP_LSB]);
+  assign function_bits = instruction[FUNCTION_MSB:FUNCTION_LSB];
+  assign alu_function = alu_func_e'(function_bits);
+  assign reg_mem_func = reg_mem_func_e'(function_bits);
+  assign address_immediate = instruction[ADDRESS_IMMEDIATE_MSB:ADDRESS_IMMEDIATE_LSB];
+  assign data_immediate = instruction[DATA_IMMEDIATE_MSB:DATA_IMMEDIATE_LSB];
+  assign reg_addr = branch_instruction
+    ? REG_STATUS
+    : instruction[REG_ADDR_MSB:REG_ADDR_LSB]; // Use STATUS register for branch instructions
 
-    // PC-relative control: All branches and JMPI are relative, JMPR is relative, JMP is absolute
-    assign pc_relative = branch_instruction || (op == OPCODE_JUMP_IMM) || 
+  // PC-relative control: All branches and JMPI are relative, JMPR is relative, JMP is absolute
+  assign pc_relative = branch_instruction || (op == OPCODE_JUMP_IMM) ||
                          (op == OPCODE_JUMP_REG && function_bits[0] == 1'b0); // JMPR=0, JMP=1
 
-    // Opcode decoding logic
-    assign acc_immediate_output_enable = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == SET);
-    assign operand_b_immediate_output_enable = !branch_instruction && (op == OPCODE_ARITH_LOGIC_IMM);
-    assign acc_write_enable = !branch_instruction && (
-        op == OPCODE_ARITH_LOGIC 
-        || op == OPCODE_ARITH_LOGIC_IMM 
+  // Opcode decoding logic
+  assign acc_immediate_output_enable = !branch_instruction
+    && (op == OPCODE_REG_MEMORY && reg_mem_func == SET);
+  assign operand_b_immediate_output_enable = !branch_instruction && (op == OPCODE_ARITH_LOGIC_IMM);
+  assign acc_write_enable = !branch_instruction && (
+        op == OPCODE_ARITH_LOGIC
+        || op == OPCODE_ARITH_LOGIC_IMM
         || (
-            op == OPCODE_REG_MEMORY 
+            op == OPCODE_REG_MEMORY
             && (
                 reg_mem_func == SET
                 || reg_mem_func == GET
@@ -86,22 +89,29 @@ import register_file_pkg::*;
             )
         )
     );
-    assign write_put_acc = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == PUT);
-    assign read_get_acc = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == GET);
-    assign read_data_output_enable = (op == OPCODE_ARITH_LOGIC || branch_instruction);
-    assign status_write_enable = !branch_instruction && (op == OPCODE_ARITH_LOGIC || op == OPCODE_ARITH_LOGIC_IMM);
-    assign data_memory_write_enable = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == STORE);
-    assign data_memory_output_enable = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == LOAD);
-    assign jump_branch_select = (branch_instruction || op == OPCODE_JUMP_REG || op == OPCODE_JUMP_IMM);
-    assign immediate_address_select = (branch_instruction || op == OPCODE_JUMP_IMM);
-    assign unconditional_branch = (op == OPCODE_JUMP_IMM) && !branch_instruction;
-    assign alu_output_enable = !branch_instruction && (op == OPCODE_ARITH_LOGIC || op == OPCODE_ARITH_LOGIC_IMM);
+  assign write_put_acc = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == PUT);
+  assign read_get_acc = !branch_instruction && (op == OPCODE_REG_MEMORY && reg_mem_func == GET);
+  assign read_data_output_enable = (op == OPCODE_ARITH_LOGIC || branch_instruction);
+  assign status_write_enable = !branch_instruction
+    && (op == OPCODE_ARITH_LOGIC || op == OPCODE_ARITH_LOGIC_IMM);
+  assign data_memory_write_enable = !branch_instruction
+    && (op == OPCODE_REG_MEMORY && reg_mem_func == STORE);
+  assign data_memory_output_enable = !branch_instruction
+    && (op == OPCODE_REG_MEMORY && reg_mem_func == LOAD);
+  assign jump_branch_select = (
+    branch_instruction
+    || op == OPCODE_JUMP_REG
+    || op == OPCODE_JUMP_IMM);
+  assign immediate_address_select = (branch_instruction || op == OPCODE_JUMP_IMM);
+  assign unconditional_branch = (op == OPCODE_JUMP_IMM) && !branch_instruction;
+  assign alu_output_enable = !branch_instruction
+    && (op == OPCODE_ARITH_LOGIC || op == OPCODE_ARITH_LOGIC_IMM);
 
-    // Immediate values are always available; top-level selects them with muxes.
-    assign acc_immediate = data_immediate;
-    assign alu_operand_b_immediate = data_immediate;
-    assign alu_operand_b_immediate_output_enable = operand_b_immediate_output_enable;
+  // Immediate values are always available; top-level selects them with muxes.
+  assign acc_immediate = data_immediate;
+  assign alu_operand_b_immediate = data_immediate;
+  assign alu_operand_b_immediate_output_enable = operand_b_immediate_output_enable;
 
-endmodule: decoder
+endmodule : decoder
 
-`endif // DECODER_SV
+`endif  // DECODER_SV

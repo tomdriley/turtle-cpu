@@ -46,7 +46,6 @@ module turtle_cpu_subsystem #(
   assign data_memory_write_enable = write_enable & int_mem_select;
   assign core_read_data = int_mem_select ? data_memory_read_data : read_data;
 
-  (* keep_hierarchy = "yes" *)
   instruction_memory #(
       .I_ADDR_W(I_ADDR_W),
       .INST_W(INST_W),
@@ -59,7 +58,6 @@ module turtle_cpu_subsystem #(
       .debug_rdata(imem_debug_rdata)
   );
 
-  (* keep_hierarchy = "yes" *)
   data_memory #(
       .D_ADDR_W(D_ADDR_W),
       .DATA_W(DATA_W),
@@ -75,7 +73,6 @@ module turtle_cpu_subsystem #(
       .debug_rdata(dmem_debug_rdata)
   );
 
-  (* keep_hierarchy = "yes" *)
   turtle_cpu_core #(
       .DATA_W(DATA_W),
       .D_ADDR_W(D_ADDR_W),

@@ -53,13 +53,10 @@ module clk_rst_pll_sync (
   assign reset_n = lock_sync[1] & ready;
 
   clk_wiz_0 instance_name (
-      // Clock out ports
-      .clk_out1(clk),         // output clk_out1
-      // Status and control signals
-      .reset   (0),           // input reset
-      .locked  (pll_locked),  // output locked
-      // Clock in ports
-      .clk_in1 (clk_in)       // input clk_in1
+      .clk_in (clk_in),     // input clk_in
+      .sys_clk(clk),        // output sys_clk
+      .reset  (0),          // input reset
+      .locked (pll_locked)  // output locked
   );
 
 endmodule

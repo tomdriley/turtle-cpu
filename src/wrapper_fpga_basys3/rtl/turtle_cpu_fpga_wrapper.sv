@@ -37,7 +37,9 @@ module turtle_cpu_fpga_wrapper #(
     input logic [15:0] sw,
     output logic [15:0] led,
     output logic [6:0] seg,
-    output logic [3:0] an
+    output logic [3:0] an,
+    output logic RsTx,
+    input logic RsRx
 );
 
   logic clk;

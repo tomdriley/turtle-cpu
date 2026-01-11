@@ -38,6 +38,8 @@ module io_controller #(
     output [15:0] led,
     output [6:0] seg,
     output [3:0] an,
+    output RsTx,
+    input RsRx,
     // Memory interface
     input logic [D_ADDR_W-1:0] data_addr,
     input logic write_enable,
@@ -69,7 +71,8 @@ module io_controller #(
   // ------------------------------------------------------------------------
   // Switch/LED passthrough + raw switch decoding
   // ------------------------------------------------------------------------
-  assign led             = sw;
+  assign led[15:1]             = sw[15:1];
+  assign led[0] = RsTx;
   assign addr            = sw[11:0];
   assign mem_sel         = sw[14:13];
   assign debug_enable_in = sw[15];
@@ -139,4 +142,5 @@ module io_controller #(
   // Outputs / submodules
   // ------------------------------------------------------------------------
   seven_segment_driver seven_segment_driver_inst (.*);
+  uart_controller uart_controller_inst (.*);
 endmodule
