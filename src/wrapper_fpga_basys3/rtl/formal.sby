@@ -1,0 +1,26 @@
+[tasks]
+bmc
+cover
+prove
+
+[options]
+bmc: mode bmc
+bmc: depth 50
+bmc: timeout 10
+cover: mode cover
+cover: depth 50
+cover: timeout 10
+prove: mode prove
+prove: depth 20
+prove: timeout 20
+prove: expect pass
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read -formal fifo_sync.sv
+prep -top fifo_sync
+
+[files]
+fifo_sync.sv
