@@ -19,16 +19,11 @@ module uart_controller #(
     parameter bit PARITY_EN = 0,
     parameter bit PARITY_EVEN = 1,
     parameter int OVERSAMPLE_RATE = 16,
-    parameter int START_SAMPLES = OVERSAMPLE_RATE / 4,
-    parameter int DATA_SAMPLES = 3,
-    localparam int FRAME_W = 1 + DATA_W + (PARITY_EN ? 1 : 0) + 1,  // Start + Data + Parity + Stop
-    localparam int FRAME_CNT_W = $clog2(FRAME_W),
     localparam int BAUD_CNT_W = $clog2(OVERSAMPLE_RATE),
     // Calculate baud clocks by oversample clock first, then multiplying
     // to ensure integer math works out. This will round down, but the error
     // should be negligible.
     localparam int OVERSAMPLE_CLOCKS = CLOCK_FREQ / (BAUD_RATE * OVERSAMPLE_RATE),
-    localparam int BAUD_CLOCKS = OVERSAMPLE_CLOCKS * OVERSAMPLE_RATE,
     localparam int OVERSAMPLE_CNT_W = $clog2(OVERSAMPLE_CLOCKS)
 ) (
     input logic clk,
@@ -77,30 +72,79 @@ module uart_controller #(
   end
 
   // ------------------------------------------------------------------------
-  // UART Transmitter
+  // UART Rx/Tx loopback with FIFOs
   // ------------------------------------------------------------------------
 
-  localparam int MESSAGE_LENGTH = 15;
-  localparam int FIRST_CHAR_INDEX = MESSAGE_LENGTH - 1;
+  // Receiver signals
+  logic [DATA_W-1:0] rx_data;
+  logic rx_valid;
 
-  logic [8*MESSAGE_LENGTH-1:0] message = {"Hello, World!", 8'h0D, 8'h0A};  // "Hello, World!\r\n"
-  logic [7:0] current_char;
-  logic [$clog2(MESSAGE_LENGTH)-1:0] char_index;
-  logic char_sent;
+  // RX FIFO
+  logic rx_fifo_full, rx_fifo_empty;
+  logic [DATA_W-1:0] rx_fifo_rdata;
+  logic rx_fifo_read;
+  logic rx_fifo_write;
 
-  assign current_char = message[8*char_index+:8];
+  // TX FIFO
+  logic tx_fifo_full, tx_fifo_empty;
+  logic [DATA_W-1:0] tx_fifo_rdata;
+  logic tx_fifo_write;
+  logic tx_fifo_read;
 
-  always_ff @(posedge clk) begin
-    if (!reset_n) begin
-      char_index <= FIRST_CHAR_INDEX;
-    end else if (char_sent) begin
-      if (char_index == 0) begin
-        char_index <= FIRST_CHAR_INDEX;
-      end else begin
-        char_index <= char_index - 1;
-      end
-    end
-  end
+  // Loopback policy: whenever RX FIFO has data and TX FIFO has space, move one byte
+  assign tx_fifo_write = !rx_fifo_empty && !tx_fifo_full;
+  assign rx_fifo_read  = tx_fifo_write;
+
+  // RX FIFO write when UART delivers a byte
+  assign rx_fifo_write = rx_valid && !rx_fifo_full;
+
+  fifo_sync #(
+      .DATA_W (DATA_W),
+      .ENTRIES(16)
+  ) rx_fifo_inst (
+      .clk(clk),
+      .reset_n(reset_n),
+      .write_en(rx_fifo_write),
+      .write_data(rx_data),
+      .full(rx_fifo_full),
+      .read_en(rx_fifo_read),
+      .read_data(rx_fifo_rdata),
+      .empty(rx_fifo_empty),
+      .status_count(),
+      .status_overflow(),
+      .status_underflow()
+  );
+
+  fifo_sync #(
+      .DATA_W (DATA_W),
+      .ENTRIES(16)
+  ) tx_fifo_inst (
+      .clk(clk),
+      .reset_n(reset_n),
+      .write_en(tx_fifo_write),
+      .write_data(rx_fifo_rdata),
+      .full(tx_fifo_full),
+      .read_en(tx_fifo_read & !tx_fifo_empty),
+      .read_data(tx_fifo_rdata),
+      .empty(tx_fifo_empty),
+      .status_count(),
+      .status_overflow(),
+      .status_underflow()
+  );
+
+  uart_receiver #(
+      .DATA_W(DATA_W),
+      .PARITY_EN(PARITY_EN),
+      .PARITY_EVEN(PARITY_EVEN),
+      .OSR(OVERSAMPLE_RATE)
+  ) uart_receiver_inst (
+      .clk(clk),
+      .reset_n(reset_n),
+      .oversample_tick(oversample_tick),
+      .RsRx(RsRx),
+      .data_out(rx_data),
+      .data_valid(rx_valid)
+  );
 
   uart_transmitter #(
       .DATA_W(DATA_W),
@@ -112,9 +156,9 @@ module uart_controller #(
       .clk(clk),
       .reset_n(reset_n),
       .baud_tick(baud_tick),
-      .data_in(current_char),
-      .in_valid(1'b1),  // Always valid
-      .in_ready(char_sent),
+      .data_in(tx_fifo_rdata),
+      .in_valid(~tx_fifo_empty),
+      .in_ready(tx_fifo_read),
       .RsTx(RsTx)
   );
 
